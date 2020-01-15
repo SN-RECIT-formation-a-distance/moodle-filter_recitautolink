@@ -195,7 +195,10 @@ class filter_recitactivity extends moodle_text_filter {
         }
 
         if ($filterslist) {
-            return $text = filter_phrases($text, $filterslist);
+            //$intCode = strip_tags($text);  
+            //$text = str_replace($intCode, filter_phrases($intCode, $filterslist), $text);
+            $text = filter_phrases($text, $filterslist);
+            return $text;
         } else {
             return $text;
         }
