@@ -29,42 +29,90 @@ defined('MOODLE_INTERNAL') || die();
  */
 class filter_recitactivity extends moodle_text_filter {
     // Trivial-cache - keyed on $cachedcourseid and $cacheduserid.
-    static $activitylist = null;
-
+   
     static $cachedcourseid;
     static $cacheduserid;
+    
+    static $userinfofilters;
+    static $all_filters_used;
     
     function filter($text, array $options = array()) {
         global $USER; // Since 2.7 we can finally start using globals in filters.
         global $PAGE;
-        
+                
         $s = get_config('filter_recitactivity', 'character');
-
+        
+        $filters_list_used = $filter = $out = array();
+        
+        preg_match_all('#(\[\[)([^\]]+)(\]\])#', $text, $out);
+        
+        foreach ($out[2] as $chain){
+        	$filter = null; $pos = null ;
+        	
+        	if( strpos($chain, 'd'.$s ) !== false ) {
+        		$pos = strpos($chain, 'd'.$s );
+        		$filter[$pos] = 'd'.$s;
+        	}
+        	if( strpos($chain, 'i'.$s ) !== false ) {
+        		$pos = strpos($chain, 'i'.$s );
+        		$filter[$pos] = 'i'.$s;
+        	}
+        	if( strpos($chain, 'c'.$s ) !== false ) {
+        		$pos = strpos($chain, 'c'.$s );
+        		$filter[$pos] = 'c'.$s;
+        	}
+        	if($filter){
+	        	$filter_used='';
+	        	for($i = 0 ; $i < count($filter) ; $i++){
+	        		$filter_used .= $filter[$i*2];
+	        	}
+	        	$filters_list_used[]=$filter_used;
+        	}	
+        }
+        
+        $filters_list_used_unique = array_unique($filters_list_used);
+        
+        if(in_array("d/", $filters_list_used_unique )){
+        	// Filters for data user information.
+        	$filter_df = '[[d'.$s.'user.firstname'.']]';
+        	self::$userinfofilters['firstname'] = new filterobject($filter_df, '', '', false, true, $USER->firstname);
+        	
+        	$filter_dl = '[[d'.$s.'user.lastname'.']]';
+        	self::$userinfofilters['lastname'] = new filterobject($filter_dl, '', '', false, true, $USER->lastname);
+        	
+        	$filter_de = '[[d'.$s.'user.email'.']]';
+        	self::$userinfofilters['email'] = new filterobject($filter_de, '', '', false, true, $USER->email);
+        	
+        	foreach (array_keys($filters_list_used_unique, 'd/') as $key) { unset($filters_list_used_unique[$key]); }
+        }
+        
         $coursectx = $this->context->get_course_context(false);
+        
         if (!$coursectx) {
             return $text;
         }
+        
         $courseid = $coursectx->instanceid;
         
         $renderer = $PAGE->get_renderer('core','course');
-
+        
         // Initialise/invalidate our trivial cache if dealing with a different course.
         if (!isset(self::$cachedcourseid) || self::$cachedcourseid !== (int)$courseid) {
-            self::$activitylist = null;
-        }
+        	self::$all_filters_used = null;
+	    }
         self::$cachedcourseid = (int)$courseid;
         // And the same for user id.
         if (!isset(self::$cacheduserid) || self::$cacheduserid !== (int)$USER->id) {
-            self::$activitylist = null;
+        	self::$all_filters_used = null;
         }
         self::$cacheduserid = (int)$USER->id;
-
+        
         /// It may be cached
-        if (self::$activitylist == null) {
+        if (self::$all_filters_used == null) {
             $modinfo = get_fast_modinfo($courseid);
             $course = $modinfo->get_course();
             if (!empty($modinfo->cms)) {
-                self::$activitylist = array(); // We will store all the created filters here.
+            	self::$all_filters_used = array(); // We will store all the created filters here.
 
                 // Create array of visible activities sorted by the name length (we are only interested in properties name and url).
                 $sortedactivities = array();
@@ -87,7 +135,6 @@ class filter_recitactivity extends moodle_text_filter {
                 foreach ($sortedactivities as $cm) {
                     $title = s(trim(strip_tags($cm->name)));
                     $currentname = trim($cm->name);
-                    $entitisedname  = s($currentname);
                     // Avoid empty or unlinkable activity names.
                     if (!empty($title)) {
                         $href_tag_begin = html_writer::start_tag('a',
@@ -96,20 +143,7 @@ class filter_recitactivity extends moodle_text_filter {
                         $href_tag_end = '</a>';
                         $completioninfo = new completion_info($course);
                         
-                        $filter_a = '[['.$currentname.']]';
-                        $filter_ai = '[['.$currentname.$s.'i]]';
-                        $filter_ia = '[[i'.$s.$currentname.']]';
-                        $filter_aic = '[['.$currentname.$s.'i'.$s.'c]]';
-                        $filter_aci = '[['.$currentname.$s.'c'.$s.'i]]';
-                        $filter_iac = '[[i'.$s.$currentname.$s.'c]]';
-                        $filter_ica = '[[i'.$s.'c'.$s.$currentname.']]';
-                        $filter_cia = '[[c'.$s.'i'.$s.$currentname.']]';
-                        $filter_cai = '[[c'.$s.$currentname.$s.'i]]';
-                        $filter_ca = '[[c'.$s.$currentname.']]';
-                        $filter_ac = '[['.$currentname.$s.'c]]';
-                        
                         $cmcurrentname = $currentname;
-                        $cmentitisedname = $entitisedname;
                         $cmname = $renderer->course_section_cm_name($cm->cminfo);
                         $cmcompletion = $this->course_section_cm_completion($course, $completioninfo, $cm->cminfo);
                         
@@ -118,89 +152,36 @@ class filter_recitactivity extends moodle_text_filter {
                             $cmname = '';
                             $cmcompletion = '';
                             $cmcurrentname = ' ';
-                            $cmentitisedname = ' ';
                             $href_tag_begin = '';
                             $href_tag_end = '';
                         }
                         
-                        //only activity
-                        self::$activitylist[$cm->id] = new filterobject($filter_a, $href_tag_begin, $href_tag_end, false, true, $cmcurrentname);
-                        
-                        //with icon no checkbox
-                        self::$activitylist[$cm->id.'-ai'] = new filterobject($filter_ai, $cmname, '', false, true, ' ');
-                        self::$activitylist[$cm->id.'-ia'] = new filterobject($filter_ia, $cmname, '', false, true, ' ');
-                        
-                        //with icon checkbox right side
-                        self::$activitylist[$cm->id.'-aic'] = new filterobject($filter_aic, $cmname, false, true, ' ');
-                        self::$activitylist[$cm->id.'-aci'] = new filterobject($filter_aci, $cmname, $cmcompletion, false, true, ' ');
-                        self::$activitylist[$cm->id.'-iac'] = new filterobject($filter_iac, $cmname, $cmcompletion, false, true, ' ');
-                        
-                        //with icon checkbox left side
-                        self::$activitylist[$cm->id.'-ica'] = new filterobject($filter_ica, $cmcompletion, $cmname, false, true, ' ');
-                        self::$activitylist[$cm->id.'-cia'] = new filterobject($filter_cia, $cmcompletion, $cmname, false, true, ' ');
-                        self::$activitylist[$cm->id.'-cai'] = new filterobject($filter_cai, $cmcompletion, $cmname, false, true, ' ');
-                        
-                        //without icon checkbox left/right
-                        self::$activitylist[$cm->id.'-ca'] = new filterobject($filter_ca, $cmcompletion.$href_tag_begin, $href_tag_end, false, true, $cmcurrentname);
-                        self::$activitylist[$cm->id.'-ac'] = new filterobject($filter_ac, $href_tag_begin, $href_tag_end.$cmcompletion, false, true, $cmcurrentname);
-                        
-                        if ($currentname != $entitisedname) {
-                            $efilter_a = '[['.$entitisedname.']]';
-                            $efilter_ai = '[['.$entitisedname.$s.'i]]';
-                            $efilter_ia = '[[i'.$s.$entitisedname.']]';
-                            $efilter_aic = '[['.$entitisedname.$s.'i'.$s.'c]]';
-                            $efilter_aci = '[['.$entitisedname.$s.'c'.$s.'i]]';
-                            $efilter_iac = '[[i'.$s.$entitisedname.$s.'c]]';
-                            $efilter_ica = '[[i'.$s.'c'.$s.$entitisedname.']]';
-                            $efilter_cia = '[[c'.$s.'i'.$s.$entitisedname.']]';
-                            $efilter_cai = '[[c'.$s.$entitisedname.$s.'i]]';
-                            $efilter_ca = '[[c'.$s.$entitisedname.']]';
-                            $efilter_ac = '[['.$entitisedname.$s.'c]]';
-                            // If name has some entity (&amp; &quot; &lt; &gt;) add that filter too. MDL-17545.
-                            //only activity
-                            self::$activitylist[$cm->id.'-e'] = new filterobject($efilter_a, $href_tag_begin, $href_tag_end, false, true, $cmentitisedname);
-                            
-                            //with icon no checkbox
-                            self::$activitylist[$cm->id.'-ai'.'-e'] = new filterobject($efilter_ai, $cmname, '', false, true, ' ');
-                            self::$activitylist[$cm->id.'-ia'.'-e'] = new filterobject($efilter_ia, $cmname, '', false, true, ' ');
-                            
-                            //with icon checkbox right side
-                            self::$activitylist[$cm->id.'-aic'.'-e'] = new filterobject($efilter_aic, $cmname, $cmcompletion, false, true, ' ');
-                            self::$activitylist[$cm->id.'-aci'.'-e'] = new filterobject($efilter_aci, $cmname, $cmcompletion, false, true, ' ');
-                            self::$activitylist[$cm->id.'-iac'.'-e'] = new filterobject($efilter_iac, $cmname, $cmcompletion, false, true, ' ');
-                            
-                            //with icon checkbox left side
-                            self::$activitylist[$cm->id.'-ica'.'-e'] = new filterobject($efilter_ica, $cmcompletion, $cmname, false, true, ' ');
-                            self::$activitylist[$cm->id.'-cia'.'-e'] = new filterobject($efilter_cia, $cmcompletion, $cmname, false, true, ' ');
-                            self::$activitylist[$cm->id.'-cai'.'-e'] = new filterobject($efilter_cai, $cmcompletion, $cmname, false, true, ' ');
-                            
-                            //without icon checkbox left/right
-                            self::$activitylist[$cm->id.'-ca'.'-e'] = new filterobject($efilter_ca, $cmcompletion.$href_tag_begin, $href_tag_end, false, true, $cmentitisedname);
-                            self::$activitylist[$cm->id.'-ac'.'-e'] = new filterobject($efilter_ac, $href_tag_begin, $href_tag_end.$cmcompletion, false, true, $cmentitisedname);
-                        }
+                        // Build all filters used in the page.
+                        self::$all_filters_used[$cm->id] = new filterobject('[['.$currentname.']]', $href_tag_begin, $href_tag_end, false, true, $cmcurrentname);
+                        foreach ($filters_list_used_unique as $filter){
+                        	if(strcmp($filter, 'i/') === 0)
+                        		self::$all_filters_used[$cm->id.$filter] = new filterobject('[['.$filter.$currentname.']]', $cmname, '', false, true, ' ');
+                        	if(strcmp($filter, 'c/') === 0)
+                        		self::$all_filters_used[$cm->id.$filter] = new filterobject('[['.$filter.$currentname.']]',$cmcompletion.$href_tag_begin, $href_tag_end, false, true, $cmcurrentname);
+                        	if(strcmp($filter, 'i/c/') === 0 or strcmp($filter, 'c/i/') === 0 )
+                        		self::$all_filters_used[$cm->id.$filter] = new filterobject('[['.$filter.$currentname.']]',$cmcompletion, $cmname, false, true, ' ');
+                        } 
                     }
                 }
             }
         }
-
-        $filterslist = array();
-        if (self::$activitylist) {
-            $cmid = $this->context->instanceid;
-            if ($this->context->contextlevel == CONTEXT_MODULE && isset(self::$activitylist[$cmid])) {
-                // remove filterobjects for the current module
-                $filterslist = array_values(array_diff_key(self::$activitylist, array($cmid => 1, $cmid.'-e' => 1)));
-            } else {
-                $filterslist = array_values(self::$activitylist);
-            }
+        
+        if (self::$userinfofilters) {
+        	$text = filter_phrases($text, self::$userinfofilters);
         }
-
-        if ($filterslist) {
-            //$intCode = strip_tags($text);  
-            //$text = str_replace($intCode, filter_phrases($intCode, $filterslist), $text);
-            $text = filter_phrases($text, $filterslist);
-            return $text;
+        
+        if (self::$all_filters_used) {
+        	//$intCode = strip_tags($text);
+        	//$text = str_replace($intCode, filter_phrases($intCode, $filterslist), $text);
+        	$text = filter_phrases($text, self::$all_filters_used);
+        	return $text;
         } else {
-            return $text;
+        	return $text;
         }
     }
     
