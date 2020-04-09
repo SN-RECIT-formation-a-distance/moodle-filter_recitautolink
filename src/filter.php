@@ -44,35 +44,33 @@ class filter_recitactivity extends moodle_text_filter {
         
         $filters_list_used = $filter = $out = array();
         
+        // List of characters filters we want to develop.
+        $filter_chars = ['d', 'i', 'c'];
+        
         preg_match_all('#(\[\[)([^\]]+)(\]\])#', $text, $out);
         
         foreach ($out[2] as $chain){
         	$filter = null; $pos = null ;
         	
-        	if( strpos($chain, 'd'.$s ) !== false ) {
-        		$pos = strpos($chain, 'd'.$s );
-        		$filter[$pos] = 'd'.$s;
+        	foreach ($filter_chars as $char){
+        		if( strpos($chain, $char.$s ) !== false ) {
+        			$pos = strpos($chain, $char.$s );
+        			$filter[$pos] = $char.$s;
+        		}
         	}
-        	if( strpos($chain, 'i'.$s ) !== false ) {
-        		$pos = strpos($chain, 'i'.$s );
-        		$filter[$pos] = 'i'.$s;
-        	}
-        	if( strpos($chain, 'c'.$s ) !== false ) {
-        		$pos = strpos($chain, 'c'.$s );
-        		$filter[$pos] = 'c'.$s;
-        	}
+        	
         	if($filter){
 	        	$filter_used='';
 	        	for($i = 0 ; $i < count($filter) ; $i++){
 	        		$filter_used .= $filter[$i*2];
 	        	}
-	        	$filters_list_used[]=$filter_used;
+	        	$filters_list_used[] = $filter_used;
         	}	
         }
         
         $filters_list_used_unique = array_unique($filters_list_used);
         
-        if(in_array("d/", $filters_list_used_unique )){
+        if(in_array('d'.$s, $filters_list_used_unique )){
         	// Filters for data user information.
         	$filter_df = '[[d'.$s.'user.firstname'.']]';
         	self::$userinfofilters['firstname'] = new filterobject($filter_df, '', '', false, true, $USER->firstname);
@@ -83,7 +81,7 @@ class filter_recitactivity extends moodle_text_filter {
         	$filter_de = '[[d'.$s.'user.email'.']]';
         	self::$userinfofilters['email'] = new filterobject($filter_de, '', '', false, true, $USER->email);
         	
-        	foreach (array_keys($filters_list_used_unique, 'd/') as $key) { unset($filters_list_used_unique[$key]); }
+        	foreach (array_keys($filters_list_used_unique, 'd'.$s) as $key) { unset($filters_list_used_unique[$key]); }
         }
         
         $coursectx = $this->context->get_course_context(false);
@@ -159,11 +157,11 @@ class filter_recitactivity extends moodle_text_filter {
                         // Build all filters used in the page.
                         self::$all_filters_used[$cm->id] = new filterobject('[['.$currentname.']]', $href_tag_begin, $href_tag_end, false, true, $cmcurrentname);
                         foreach ($filters_list_used_unique as $filter){
-                        	if(strcmp($filter, 'i/') === 0)
+                        	if(strcmp($filter, 'i'.$s) === 0)
                         		self::$all_filters_used[$cm->id.$filter] = new filterobject('[['.$filter.$currentname.']]', $cmname, '', false, true, ' ');
-                        	if(strcmp($filter, 'c/') === 0)
+                        	if(strcmp($filter, 'c'.$s) === 0)
                         		self::$all_filters_used[$cm->id.$filter] = new filterobject('[['.$filter.$currentname.']]',$cmcompletion.$href_tag_begin, $href_tag_end, false, true, $cmcurrentname);
-                        	if(strcmp($filter, 'i/c/') === 0 or strcmp($filter, 'c/i/') === 0 )
+                        	if(strcmp($filter, 'i'.$s.'c'.$s) === 0 or strcmp($filter, 'c'.$s.'i'.$s) === 0 )
                         		self::$all_filters_used[$cm->id.$filter] = new filterobject('[['.$filter.$currentname.']]',$cmcompletion, $cmname, false, true, ' ');
                         } 
                     }
