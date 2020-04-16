@@ -22,7 +22,8 @@
 // @license    {@link http://www.gnu.org/licenses/gpl-3.0.html} GNU GPL v3 or later
 // @developer  Studio XP : {@link https://www.studioxp.ca}
 
-$string['filtername'] = "Recit's better activity names auto-linking";
-$string['privacy:metadata'] = 'The Activity names auto-linking plugin does not store any personal data.';
-$string['character'] = 'The separator character';
-$string['character_desc'] = 'Represents the separator character used in the filter. If the character is /, the filter will search for it in [[activityname/i]]';
+$string['filtername'] = "Liens automatiques améliorés du RÉCIT";
+$string['privacy:metadata'] = 'Le plugin Liens automatiques améliorés du RÉCIT ne conserve aucune doonnée.';
+$string['character'] = 'Caractère servant de séparateur';
+$string['character_desc'] = 'Ceci repésente le caractère séparateur à utiliser dans le filtre . Si le caractère est /, la syntaxe sera la suivante [[activityname/i]] <b>Code d\'intégration</b> <br>Nom d\'une activité [[activityname/i/c]]<br>
+Nom de l\'élève [[/namne]]';

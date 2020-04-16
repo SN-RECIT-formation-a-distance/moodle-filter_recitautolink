@@ -85,7 +85,7 @@ class filter_recitactivity extends moodle_text_filter {
 		global $PAGE, $OUTPUT, $DB;
 				
 		// Check if we need to build filters.
-		if(strpos('[[') === false or !is_string($text) or empty($text)){;
+		if(strpos($text,'[[') === false or !is_string($text) or empty($text)){;
 			return $text;
 		}
 				
