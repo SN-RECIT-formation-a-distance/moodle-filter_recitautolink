@@ -40,7 +40,7 @@ class filter_recitactivity extends moodle_text_filter {
 	
 	public function setup($page, $context) {
 		global $DB, $USER, $COURSE, $OUTPUT ;
-				
+						
 		$coursectx = $context->get_course_context(false);
 		
 		if (!$coursectx) {
@@ -83,7 +83,7 @@ class filter_recitactivity extends moodle_text_filter {
 	function filter($text, array $options = array()) {
 		global $USER; // Since 2.7 we can finally start using globals in filters.
 		global $PAGE, $OUTPUT, $DB;
-		
+				
 		// Check if we need to build filters.
 		if(strpos('[[') === false or !is_string($text) or empty($text)){;
 			return $text;
@@ -109,22 +109,38 @@ class filter_recitactivity extends moodle_text_filter {
 		preg_match_all('#(\[\[)([^\]]+)(\]\])#', $text, $out);
 		
 		foreach ($out[2] as $chain){
-			$filter = null; $pos = null ;
+			$filter = null; $pos = null ; $max_pos = 0;
 			
 			foreach ($filter_chars as $char){
 				if( strpos($chain, $char.$s ) !== false ) {
 					$pos = strpos($chain, $char.$s );
 					$filter[$pos] = $char.$s;
+					$max_pos = max($max_pos, $pos);
 				}
 			}
 			
+			ksort($filter);
+			
 			if($filter){
 				$filter_used='';
-				for($i = 0 ; $i < count($filter) ; $i++){
-					$filter_used .= $filter[$i*2];
+				
+				foreach($filter as $value){
+					$filter_used .= $value;
 				}
+				
 				$filters_list_used[] = $filter_used;
+				
+				$substring_1 = substr($chain, 0, $max_pos+2);
+				$substring_2 = substr($chain, $max_pos+2);
+								
+				$substring_2_strip_space = str_replace("&nbsp;", '', $substring_2);
+				$substring_2_trim = trim($substring_2_strip_space);
+				
+				if(strcmp($substring_1, $filter_used) !== 0 or strcmp($substring_2, $substring_2_trim) !== 0 ){
+					$text = str_replace('[['.$substring_1.$substring_2.']]', '[['.$filter_used.$substring_2_trim.']]', $text);
+				}
 			}
+			
 		}
 		
 		$filters_list_used_unique = array_unique($filters_list_used);
@@ -139,7 +155,7 @@ class filter_recitactivity extends moodle_text_filter {
 			
 			$filter_de = '[[d'.$s.'user.email'.']]';
 			self::$userinfofilters['email'] = new filterobject($filter_de, '', '', false, true, $USER->email);
-			
+						
 			$picture = $OUTPUT->user_picture($USER, array('courseid' => $coursectx->instanceid, 'link' => false));
 			
 			$filter_dp = '[[d'.$s.'user.picture'.']]';
