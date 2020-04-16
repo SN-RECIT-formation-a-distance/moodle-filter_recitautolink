@@ -25,4 +25,5 @@
 $string['filtername'] = "Recit's better activity names auto-linking";
 $string['privacy:metadata'] = 'The Activity names auto-linking plugin does not store any personal data.';
 $string['character'] = 'The separator character';
-$string['character_desc'] = 'Represents the separator character used in the filter. If the character is /, the filter will search for it in [[activityname/i]]';
+$string['character_desc'] = 'Represents the separator character used in the filter. If the character is /, the filter will search for it in [[activityname/i]] <b>Code d\'intégration</b> <br>Nom d\'une activité [[activityname/i/c]]<br>
+Nom de l\'élève [[/namne]]';
