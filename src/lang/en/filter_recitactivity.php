@@ -25,5 +25,15 @@
 $string['filtername'] = "Recit's better activity names auto-linking";
 $string['privacy:metadata'] = 'The Activity names auto-linking plugin does not store any personal data.';
 $string['character'] = 'The separator character';
-$string['character_desc'] = 'Represents the separator character used in the filter. If the character is /, the filter will search for it in [[activityname/i]] <b>Code d\'intégration</b> <br>Nom d\'une activité [[activityname/i/c]]<br>
-Nom de l\'élève [[/namne]]';
+$string['character_desc'] = 'Represents the separator character used in the filter. If the character is <b style="color:red">/</b>, the filter will search for it in [[i<b style="color:red">/</b>activityname]].
+	<br>All indicators (<b style="color:red"> i/, c/, d/ </b>) must be at the begenning of open tag <b style="color:red">[[</b>.
+	<br><b>Integration code</b> 
+	<br>Activity name link [[activityname]]
+	<br>Activity name link with icon [[<b style="color:red">i/</b>activityname]]
+	<br>Activity name link with completion checkbox  [[<b style="color:red">c/</b>activityname]]
+	<br>Activity name link with icon and completion checkbox [[<b style="color:red">i/c/</b>activityname]]
+	<br>Course informations : [[<b style="color:red">d/</b>course.fullname]], [[<b style="color:red">d/</b>course.shortname]]
+	<br>Student firstname, lastname, email and avatar : [[<b style="color:red">d/</b>user.firstname]], [[<b style="color:red">d/</b>user.lastname]], [[<b style="color:red">d/</b>user.email]] and [[<b style="color:red">d/</b>user.picture]]
+	<br>First teacher firstname, lastname, email and avatar : [[<b style="color:red">d/</b>teacher1.firstname]], [[<b style="color:red">d/</b>teacher1.lastname]], [[<b style="color:red">d/</b>teacher1.email]] and [[<b style="color:red">d/</b>teacher1.picture]]
+	<br>Same for teacher2, teacher3, ... for all teachers for that course.
+	';

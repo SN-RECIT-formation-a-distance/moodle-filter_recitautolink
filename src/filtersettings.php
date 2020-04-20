@@ -23,8 +23,8 @@
 // @developer  Studio XP : {@link https://www.studioxp.ca}
 
 $settings->add(new admin_setting_configtext('filter_recitactivity/character',
-        get_string('character', 'filter_recitactivity'),
-        get_string('character_desc', 'filter_recitactivity'), '/', PARAM_NOTAGS));
+		get_string('character', 'filter_recitactivity'),
+		get_string('character_desc', 'filter_recitactivity'), '/', PARAM_NOTAGS));
         
     
     

@@ -15,6 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
+// This filter must be put over Auto-linking with Manage Filters to work properly.
+//
 // @package    filter_recitactivity
 // @subpackage RECIT
 // @copyright  RECIT {@link https://recitfad.ca}
@@ -29,6 +31,7 @@ require_once($CFG->dirroot . "/local/recitcommon/php/PersistCtrl.php");
 /**
  * Activity name filtering
  */
+
 class filter_recitactivity extends moodle_text_filter {
 	// Trivial-cache - keyed on $cachedcourseid and $cacheduserid.
 	
@@ -83,7 +86,7 @@ class filter_recitactivity extends moodle_text_filter {
 	function filter($text, array $options = array()) {
 		global $USER; // Since 2.7 we can finally start using globals in filters.
 		global $PAGE, $OUTPUT, $DB;
-				
+			
 		// Check if we need to build filters.
 		if(strpos($text,'[[') === false or !is_string($text) or empty($text)){;
 			return $text;
@@ -127,20 +130,27 @@ class filter_recitactivity extends moodle_text_filter {
 				foreach($filter as $value){
 					$filter_used .= $value;
 				}
-				
-				$filters_list_used[] = $filter_used;
-				
-				$substring_1 = substr($chain, 0, $max_pos+2);
-				$substring_2 = substr($chain, $max_pos+2);
 								
-				$substring_2_strip_space = str_replace("&nbsp;", '', $substring_2);
-				$substring_2_trim = trim($substring_2_strip_space);
+				if(strcmp($filter_used, '') !== 0) {
+					$filters_list_used[] = $filter_used;
+					
+					$substring_1 = substr($chain, 0, $max_pos+2);
+					$substring_2 = substr($chain, $max_pos+2);
+					
+					$substring_2_strip_space_tag = trim(str_replace("&nbsp;", ' ', $substring_2));
+					
+					if(strcmp($substring_1, $filter_used) !== 0 or strcmp($substring_2, $substring_2_strip_space_tag) !== 0){
+						$text = str_replace('[['.$substring_1.$substring_2.']]' , '[['.$filter_used.$substring_2_strip_space_tag.']]', $text);
+					}
+				}
 				
-				if(strcmp($substring_1, $filter_used) !== 0 or strcmp($substring_2, $substring_2_trim) !== 0 ){
-					$text = str_replace('[['.$substring_1.$substring_2.']]', '[['.$filter_used.$substring_2_trim.']]', $text);
+			}else{
+				$substring_2_strip_space_tag = trim(str_replace("&nbsp;", ' ', $chain));
+				
+				if(strcmp($chain, $substring_2_strip_space_tag) !== 0){
+					$text = str_replace('[['.$chain.']]' , '[['.$substring_2_strip_space_tag.']]', $text);
 				}
 			}
-			
 		}
 		
 		$filters_list_used_unique = array_unique($filters_list_used);
@@ -203,6 +213,7 @@ class filter_recitactivity extends moodle_text_filter {
 				foreach ($sortedactivities as $cm) {
 					$title = s(trim(strip_tags($cm->name)));
 					$currentname = trim($cm->name);
+					
 					// Avoid empty or unlinkable activity names.
 					if (!empty($title)) {
 												

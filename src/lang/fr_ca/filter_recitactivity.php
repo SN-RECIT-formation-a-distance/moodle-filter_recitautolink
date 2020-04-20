@@ -25,5 +25,15 @@
 $string['filtername'] = "Liens automatiques améliorés du RÉCIT";
 $string['privacy:metadata'] = 'Le plugin Liens automatiques améliorés du RÉCIT ne conserve aucune doonnée.';
 $string['character'] = 'Caractère servant de séparateur';
-$string['character_desc'] = 'Ceci repésente le caractère séparateur à utiliser dans le filtre . Si le caractère est /, la syntaxe sera la suivante [[activityname/i]] <b>Code d\'intégration</b> <br>Nom d\'une activité [[activityname/i/c]]<br>
-Nom de l\'élève [[/namne]]';
+$string['character_desc'] = 'Ceci repésente le caractère séparateur à utiliser dans le filtre . Si le caractère est <b style="color:red">/</b>, la syntaxe sera la suivante [[i<b style="color:red">/</b>Nom de l\'activité]].
+	<br>Tous les indicateurs (<b style="color:red"> i/, c/, d/ </b>) doivent être placés au début du double crochets ouverts <b style="color:red">[[</b>.
+	<br><b>Code d\'intégration</b>
+	<br>Lien vers une activité [[Nom de l\'activité]]
+	<br>Lien vers une activité avec icône [[<b style="color:red">i/</b>Nom de l\'activité]]
+	<br>Lien vers une activité avec une case à cocher pour la complétion [[<b style="color:red">c/</b>Nom de l\'activité]]
+	<br>Lien vers une activité avec icône et une case à cocher pour la complétion [[<b style="color:red">i/c/</b>Nom de l\'activité]]
+	<br>Informations pour les noms du cours : [[<b style="color:red">d/</b>course.fullname]], [[<b style="color:red">d/</b>course.shortname]]
+	<br>Informations de l\'élève prénom, nom, courriel et avatar : [[<b style="color:red">d/</b>user.firstname]], [[<b style="color:red">d/</b>user.lastname]], [[<b style="color:red">d/</b>user.email]] et [[<b style="color:red">d/</b>user.picture]]
+	<br>Informations pour le premier professeur prénom, nom, courriel et avatar : [[<b style="color:red">d/</b>teacher1.firstname]], [[<b style="color:red">d/</b>teacher1.lastname]], [[<b style="color:red">d/</b>teacher1.email]] et [[<b style="color:red">d/</b>teacher1.picture]]
+	<br>Pour les autres professeurs du cours, ils sont numérotés teacher2, teacher3, ...
+	';
