@@ -23,10 +23,10 @@
 // @developer  Studio XP : {@link https://www.studioxp.ca}
 
 $string['filtername'] = "Recit's better activity names auto-linking";
-$string['privacy:metadata'] = 'The Activity names auto-linking plugin does not store any personal data.';
+$string['privacy:metadata'] = 'The "Recit\'s better activity names auto-linking" plugin does not store any personal data.';
 $string['character'] = 'The separator character';
 $string['character_desc'] = 'Represents the separator character used in the filter. If the character is <b style="color:red">/</b>, the filter will search for it in [[i<b style="color:red">/</b>activityname]].
-	<br>All indicators (<b style="color:red"> i/, c/, d/ </b>) must be at the begenning of open tag <b style="color:red">[[</b>.
+	<br>All indicators (<b style="color:red"> i/, c/, d/ </b>) must be at the begenning of double brackets <b style="color:red">[[</b>.
 	<br><b>Integration code</b> 
 	<br>Activity name link [[activityname]]
 	<br>Activity name link with icon [[<b style="color:red">i/</b>activityname]]

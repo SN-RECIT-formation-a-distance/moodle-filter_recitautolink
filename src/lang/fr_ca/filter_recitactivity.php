@@ -23,7 +23,7 @@
 // @developer  Studio XP : {@link https://www.studioxp.ca}
 
 $string['filtername'] = "Liens automatiques améliorés du RÉCIT";
-$string['privacy:metadata'] = 'Le plugin Liens automatiques améliorés du RÉCIT ne conserve aucune doonnée.';
+$string['privacy:metadata'] = 'Le plugin "Liens automatiques améliorés du RÉCIT" ne conserve aucune donnée.';
 $string['character'] = 'Caractère servant de séparateur';
 $string['character_desc'] = 'Ceci repésente le caractère séparateur à utiliser dans le filtre . Si le caractère est <b style="color:red">/</b>, la syntaxe sera la suivante [[i<b style="color:red">/</b>Nom de l\'activité]].
 	<br>Tous les indicateurs (<b style="color:red"> i/, c/, d/ </b>) doivent être placés au début du double crochets ouverts <b style="color:red">[[</b>.
