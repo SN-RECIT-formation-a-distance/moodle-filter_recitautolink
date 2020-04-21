@@ -122,7 +122,7 @@ class filter_recitactivity extends moodle_text_filter {
 				}
 			}
 			
-			ksort($filter);
+			//ksort($filter);
 			
 			if($filter){
 				$filter_used='';
