@@ -31,15 +31,10 @@ defined('MOODLE_INTERNAL') || die();
  */
 
 class filter_recitactivity extends moodle_text_filter {
-	// Trivial-cache - keyed on $cachedcourseid and $cacheduserid.
-	
-	static $cachedcourseid;
-	static $cacheduserid;
-	
-	static $userinfofilters;
-	static $all_filters_used;
+    protected $courseActivityList = array();
+    protected $teacherList = array();
     
-    protected function getCourseTeachers($courseId){
+    protected function loadCourseTeachers($courseId){
         global $DB;
 
         $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
@@ -50,11 +45,11 @@ class filter_recitactivity extends moodle_text_filter {
             $teacher->imagealt = sprintf("%s %s", $teacher->firstname, $teacher->lastname);
         }
 
-        return array_values($result);
+        $this->teacherList = array_values($result);
     }
 
 	public function setup($page, $context) {
-		global $DB, $USER, $COURSE, $OUTPUT ;
+		global $COURSE;
 						
 		$coursectx = $context->get_course_context(false);
 		
@@ -62,42 +57,84 @@ class filter_recitactivity extends moodle_text_filter {
 			return ;
 		}
 		
-		$s = get_config('filter_recitactivity', 'character');
-		
-		$filter_cf = '[[d'.$s.'course.fullname'.']]';
-		self::$userinfofilters['coursefullname'] = new filterobject($filter_cf, '', '', false, true, $COURSE->fullname);
-		
-		$filter_cs = '[[d'.$s.'course.shortname'.']]';
-		self::$userinfofilters['courseshortname'] = new filterobject($filter_cs, '', '', false, true, $COURSE->shortname);
-			
-		$teachers = $this->getCourseTeachers($COURSE->id);
-		
-		$index = 1;
-		
-		foreach ($teachers as $teacher){
-			
-			// Filters for teacher data information.
-			$filter_df = '[[d'.$s.'teacher'.$index.'.firstname'.']]';
-			self::$userinfofilters['firstname'.$index] = new filterobject($filter_df, '', '', false, true, $teacher->firstname);
-			
-			$filter_dl = '[[d'.$s.'teacher'.$index.'.lastname'.']]';
-			self::$userinfofilters['lastname'.$index] = new filterobject($filter_dl, '', '', false, true, $teacher->lastname);
-			
-			$filter_de = '[[d'.$s.'teacher'.$index.'.email'.']]';
-			self::$userinfofilters['email'.$index] = new filterobject($filter_de, '', '', false, true, $teacher->email);
-			
-			$picture = $OUTPUT->user_picture($teacher, array('courseid' => $coursectx->instanceid, 'link' => false));
-			
-			$filter_dp = '[[d'.$s.'teacher'.$index.'.picture'.']]';
-			self::$userinfofilters['picture'.$index] = new filterobject($filter_dp, $picture , '', false, true , ' ');
-			
-			$index++;
-		}
-	}
-	
+		$this->loadCourseTeachers($COURSE->id);
+				        
+        $this->loadCourseActivityList();
+    }
+    
+    function loadCourseActivityList(){
+        global $COURSE, $PAGE;
+
+        $this->courseActivityList = array();
+
+        $modinfo = get_fast_modinfo($COURSE->id);
+        $course = $modinfo->get_course();
+        $renderer = $PAGE->get_renderer('core','course');
+        
+        if (!empty($modinfo->cms)) {
+            // Create array of visible activities sorted by the name length (we are only interested in properties name and url).
+            $sortedactivities = array();
+            foreach ($modinfo->cms as $cm) {
+                // Use normal access control and visibility, but exclude labels and hidden activities.
+                if ($cm->has_view()) {
+                    $sortedactivities[] = (object)array(
+                            'cminfo' => $cm,
+                            'name' => $cm->name,
+                            'url' => $cm->url,
+                            'id' => $cm->id,
+                            'visible' => $cm->uservisible,
+                            'namelen' => -strlen($cm->name) // Negative value for reverse sorting.
+                    );
+                }
+            }
+            foreach ($sortedactivities as $cm) {
+                $title = s(trim(strip_tags($cm->name)));
+                $currentname = trim($cm->name);
+
+                // Avoid empty or unlinkable activity names.
+                if (!empty($title)) {
+                    $completioninfo = new completion_info($course);
+                    
+                    $cmcurrentname = $currentname;
+                    $cmname = $renderer->course_section_cm_name($cm->cminfo);
+                    $cmcompletion = $this->course_section_cm_completion($course, $completioninfo, $cm->cminfo);
+                    
+                    if(!$cm->visible)
+                    {
+                        $cmname = '';
+                        $cmcompletion = '';
+                        $cmcurrentname = ' ';
+                        $href_tag_begin = '';
+                        $href_tag_end = '';
+                    }
+
+                    $courseActivity = new stdClass();
+                    $courseActivity->cmname = $cmname;
+                    $courseActivity->currentname = $currentname;
+                    $courseActivity->cmcompletion = $cmcompletion;
+                    $courseActivity->cmcompletion = $cmcompletion;
+                    $courseActivity->href_tag_begin = html_writer::start_tag('a', array('class' => 'autolink', 'title' => $title, 'href' => $cm->url));
+					$courseActivity->href_tag_end = '</a>';
+                    $this->courseActivityList[] = $courseActivity;				
+                }
+            }
+        }
+    }
+    
+    function getCourseActivity($name){
+        $result = null;
+        
+        foreach($this->courseActivityList as $item){
+            if($item->currentname == $name){
+                return $item;
+            }
+        }
+
+        return null;
+    }
+    
 	function filter($text, array $options = array()) {
-		global $USER; // Since 2.7 we can finally start using globals in filters.
-		global $PAGE, $OUTPUT, $DB;
+		global $USER, $PAGE, $OUTPUT, $COURSE;
 			
 		// Check if we need to build filters.
 		if(strpos($text,'[[') === false or !is_string($text) or empty($text)){;
@@ -112,169 +149,96 @@ class filter_recitactivity extends moodle_text_filter {
 		
 		$courseid = $coursectx->instanceid;
 			
-		$renderer = $PAGE->get_renderer('core','course');
-				
-		$s = get_config('filter_recitactivity', 'character');
+		$sep = get_config('filter_recitactivity', 'character');
 		
-		$filters_list_used = $filter = $out = array();
-		
-		// List of characters filters we want to develop.
-		$filter_chars = ['d', 'i', 'c'];
-		
-		preg_match_all('#(\[\[)([^\]]+)(\]\])#', $text, $out);
-		
-		foreach ($out[2] as $chain){
-			$filter = null; $pos = null ; $max_pos = 0;
-			
-			foreach ($filter_chars as $char){
-				if( strpos($chain, $char.$s ) !== false ) {
-					$pos = strpos($chain, $char.$s );
-					$filter[$pos] = $char.$s;
-					$max_pos = max($max_pos, $pos);
-				}
-			}
-			
-			//ksort($filter);
-			
-			if($filter){
-				$filter_used='';
-				
-				foreach($filter as $value){
-					$filter_used .= $value;
-				}
-								
-				if(strcmp($filter_used, '') !== 0) {
-					$filters_list_used[] = $filter_used;
-					
-					$substring_1 = substr($chain, 0, $max_pos+2);
-					$substring_2 = substr($chain, $max_pos+2);
-					
-					$substring_2_strip_space_tag = trim(str_replace("&nbsp;", ' ', $substring_2));
-					
-					if(strcmp($substring_1, $filter_used) !== 0 or strcmp($substring_2, $substring_2_strip_space_tag) !== 0){
-						$text = str_replace('[['.$substring_1.$substring_2.']]' , '[['.$filter_used.$substring_2_strip_space_tag.']]', $text);
-					}
-				}
-				
-			}else{
-				$substring_2_strip_space_tag = trim(str_replace("&nbsp;", ' ', $chain));
-				
-				if(strcmp($chain, $substring_2_strip_space_tag) !== 0){
-					$text = str_replace('[['.$chain.']]' , '[['.$substring_2_strip_space_tag.']]', $text);
-				}
-			}
-		}
-		
-		$filters_list_used_unique = array_unique($filters_list_used);
-				
-		if(in_array('d'.$s, $filters_list_used_unique )){
-			// Filters for user data information.
-			$filter_df = '[[d'.$s.'user.firstname'.']]';
-			self::$userinfofilters['firstname'] = new filterobject($filter_df, '', '', false, true, $USER->firstname);
-			
-			$filter_dl = '[[d'.$s.'user.lastname'.']]';
-			self::$userinfofilters['lastname'] = new filterobject($filter_dl, '', '', false, true, $USER->lastname);
-			
-			$filter_de = '[[d'.$s.'user.email'.']]';
-			self::$userinfofilters['email'] = new filterobject($filter_de, '', '', false, true, $USER->email);
-						
-			$picture = $OUTPUT->user_picture($USER, array('courseid' => $coursectx->instanceid, 'link' => false));
-			
-			$filter_dp = '[[d'.$s.'user.picture'.']]';
-			self::$userinfofilters['picture'] = new filterobject($filter_dp, $picture , '', false, true , ' ');
-			
-		}
-		
-		// Initialise/invalidate our trivial cache if dealing with a different course.
-		if (!isset(self::$cachedcourseid) || self::$cachedcourseid !== (int)$courseid) {
-			self::$all_filters_used = null;
-		}
-		self::$cachedcourseid = (int)$courseid;
-		// And the same for user id.
-		if (!isset(self::$cacheduserid) || self::$cacheduserid !== (int)$USER->id) {
-			self::$all_filters_used = null;
-		}
-		self::$cacheduserid = (int)$USER->id;
-		
-		/// It may be cached
-		if (self::$all_filters_used == null) {
-			$modinfo = get_fast_modinfo($courseid);
-			$course = $modinfo->get_course();
-			
-			if (!empty($modinfo->cms)) {
-				self::$all_filters_used = array(); // We will store all the created filters here.
-				
-				// Create array of visible activities sorted by the name length (we are only interested in properties name and url).
-				$sortedactivities = array();
-				foreach ($modinfo->cms as $cm) {
-					// Use normal access control and visibility, but exclude labels and hidden activities.
-					if ($cm->has_view()) {
-						$sortedactivities[] = (object)array(
-								'cminfo' => $cm,
-								'name' => $cm->name,
-								'url' => $cm->url,
-								'id' => $cm->id,
-								'visible' => $cm->uservisible,
-								'namelen' => -strlen($cm->name) // Negative value for reverse sorting.
-						);
-					}
-				}
-				// Sort activities by the length of the activity name in reverse order.
-				core_collator::asort_objects_by_property($sortedactivities, 'namelen', core_collator::SORT_NUMERIC);
-				
-				foreach ($sortedactivities as $cm) {
-					$title = s(trim(strip_tags($cm->name)));
-					$currentname = trim($cm->name);
-					
-					// Avoid empty or unlinkable activity names.
-					if (!empty($title)) {
-												
-						$href_tag_begin = html_writer::start_tag('a',
-								array('class' => 'autolink', 'title' => $title,
-										'href' => $cm->url));
-						$href_tag_end = '</a>';
-						$completioninfo = new completion_info($course);
-						
-						$cmcurrentname = $currentname;
-						$cmname = $renderer->course_section_cm_name($cm->cminfo);
-						$cmcompletion = $this->course_section_cm_completion($course, $completioninfo, $cm->cminfo);
-						
-						if(!$cm->visible)
-						{
-							$cmname = '';
-							$cmcompletion = '';
-							$cmcurrentname = ' ';
-							$href_tag_begin = '';
-							$href_tag_end = '';
-						}
-						
-						// Build all filters used in the page.
-						self::$all_filters_used[$cm->id] = new filterobject('[['.$currentname.']]', $href_tag_begin, $href_tag_end, false, true, $cmcurrentname);
-						foreach ($filters_list_used_unique as $filter){
-							if(strcmp($filter, 'i'.$s) === 0)
-								self::$all_filters_used[$cm->id.$filter] = new filterobject('[['.$filter.$currentname.']]', $cmname, '', false, true, ' ');
-							if(strcmp($filter, 'c'.$s) === 0)
-								self::$all_filters_used[$cm->id.$filter] = new filterobject('[['.$filter.$currentname.']]',$cmcompletion.$href_tag_begin, $href_tag_end, false, true, $cmcurrentname);
-							if(strcmp($filter, 'i'.$s.'c'.$s) === 0 or strcmp($filter, 'c'.$s.'i'.$s) === 0 )
-								self::$all_filters_used[$cm->id.$filter] = new filterobject('[['.$filter.$currentname.']]',$cmcompletion, $cmname, false, true, ' ');
-						}
-					}
-				}
-			}
-		}
-		
-		if (self::$userinfofilters) {
-			$text = filter_phrases($text, self::$userinfofilters);
-		}
-		
-		if (self::$all_filters_used) {
-			//$intCode = strip_tags($text);
-			//$text = str_replace($intCode, filter_phrases($intCode, $filterslist), $text);
-			$text = filter_phrases($text, self::$all_filters_used);
-			return $text;
-		} else {
-			return $text;
-		}
+		preg_match_all('#(\[\[)([^\]]+)(\]\])#', $text, $matches);
+        
+        $matches = $matches[0]; // it will match the wanted RE, for instance [[i/Activité 3]]
+        
+        $result = $text;
+        foreach($matches as $match){
+            $item = explode($sep, $match);
+
+            // in case [[ActivityName]]
+            if(count($item) == 1){
+                $item[0] = str_replace("[[", "", $item[0]);
+                $complement = str_replace("]]", "", $item[0]);
+                $param = "l";
+            }
+            else{
+                $complement = str_replace("]]", "", array_pop($item));
+                $param = str_replace("[[", "", implode("", $item));
+            }
+            
+            switch($param){
+                case "i":                            
+                    $activity = $this->getCourseActivity($complement);
+                    if($activity != null){
+                        $result = str_replace($match, $activity->cmname, $result);
+                    }
+                    break;
+                case "c":
+                    $activity = $this->getCourseActivity($complement);
+                    if($activity != null){
+                        $result = str_replace($match, sprintf("%s%s%s%s", $activity->cmcompletion, $activity->href_tag_begin, $activity->currentname, $activity->href_tag_end), $result);
+                    }
+                    break;
+                case "ci":
+                case "ic":
+                    $activity = $this->getCourseActivity($complement);
+                    if($activity != null){
+                        $result = str_replace($match, sprintf("%s%s", $activity->cmcompletion, $activity->cmname), $result);
+                    }
+                    break;
+                case "l":
+                    $activity = $this->getCourseActivity($complement);
+                    if($activity != null){
+                        $result = str_replace($match, sprintf("%s%s%s", $activity->href_tag_begin, $activity->currentname, $activity->href_tag_end), $result);
+                    }
+                    break;
+                case "d":
+                    if($complement == "user.firstname"){
+                        $result = str_replace($match, $USER->firstname, $result);
+                    }
+                    else if($complement == "user.lastname"){
+                        $result = str_replace($match, $USER->lastname, $result);
+                    }
+                    else if($complement == "user.email"){
+                        $result = str_replace($match, $USER->email, $result);
+                    }
+                    else if($complement == "user.picture"){
+                        $picture = $OUTPUT->user_picture($USER, array('courseid' => $coursectx->instanceid, 'link' => false));
+                        $result = str_replace($match, $picture, $result);
+                    }
+                    else if($complement == "course.shortname"){
+                        $result = str_replace($match, $COURSE->shortname, $result);
+                    }
+                    else if($complement == "course.fullname"){
+                        $result = str_replace($match, $COURSE->fullname, $result);
+                    }
+                    else{
+                        foreach($this->teacherList as $index => $teacher){
+                            $nb = $index + 1;
+                            if($complement == "teacher$nb.firstname"){
+                                $result = str_replace($match, $teacher->firstname, $result);
+                            }
+                            else if($complement == "teacher$nb.lastname"){
+                                $result = str_replace($match, $teacher->lastname, $result);
+                            }
+                            else if($complement == "teacher$nb.email"){
+                                $result = str_replace($match, $teacher->email, $result);
+                            }
+                            else if($complement == "teacher$nb.picture"){
+                                $picture = $OUTPUT->user_picture($teacher, array('courseid' => $coursectx->instanceid, 'link' => false));
+                                $result = str_replace($match, $picture, $result);
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+
+        return $result;
 	}
 	
 	public function course_section_cm_completion($course, &$completioninfo, cm_info $mod) {

@@ -27,5 +27,5 @@ defined('MOODLE_INTERNAL') || die();
 $plugin->version   = 2020050100;        // The current plugin version (Date: YYYYMMDDXX)
 $plugin->requires  = 2018050800;        // Requires this Moodle version
 $plugin->component = 'filter_recitactivity'; // Full name of the plugin (used for diagnostics)
-$plugin->release = 'R7-2020051100';
+$plugin->release = 'R7-2020051101';
 $plugin->maturity = MATURITY_BETA;
