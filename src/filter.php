@@ -26,8 +26,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . "/local/recitcommon/php/PersistCtrl.php");
-
 /**
  * Activity name filtering
  */
@@ -40,7 +38,21 @@ class filter_recitactivity extends moodle_text_filter {
 	
 	static $userinfofilters;
 	static $all_filters_used;
-	
+    
+    protected function getCourseTeachers($courseId){
+        global $DB;
+
+        $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
+        $context = context_course::instance($courseId);
+        $result = get_role_users($role->id, $context);
+        
+        foreach($result as $teacher){
+            $teacher->imagealt = sprintf("%s %s", $teacher->firstname, $teacher->lastname);
+        }
+
+        return array_values($result);
+    }
+
 	public function setup($page, $context) {
 		global $DB, $USER, $COURSE, $OUTPUT ;
 						
@@ -58,7 +70,7 @@ class filter_recitactivity extends moodle_text_filter {
 		$filter_cs = '[[d'.$s.'course.shortname'.']]';
 		self::$userinfofilters['courseshortname'] = new filterobject($filter_cs, '', '', false, true, $COURSE->shortname);
 			
-		$teachers = PersistCtrl::getInstance($DB, $USER)->getCourseTeachers($COURSE->id);
+		$teachers = $this->getCourseTeachers($COURSE->id);
 		
 		$index = 1;
 		
