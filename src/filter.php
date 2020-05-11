@@ -170,6 +170,7 @@ class filter_recitactivity extends moodle_text_filter {
                 $param = str_replace("[[", "", implode("", $item));
             }
             
+            
             switch($param){
                 case "i":                            
                     $activity = $this->getCourseActivity($complement);
@@ -180,14 +181,14 @@ class filter_recitactivity extends moodle_text_filter {
                 case "c":
                     $activity = $this->getCourseActivity($complement);
                     if($activity != null){
-                        $result = str_replace($match, sprintf("%s%s%s%s", $activity->cmcompletion, $activity->href_tag_begin, $activity->currentname, $activity->href_tag_end), $result);
+                        $result = str_replace($match, sprintf("%s %s %s %s", $activity->cmcompletion, $activity->href_tag_begin, $activity->currentname, $activity->href_tag_end), $result);
                     }
                     break;
                 case "ci":
                 case "ic":
                     $activity = $this->getCourseActivity($complement);
                     if($activity != null){
-                        $result = str_replace($match, sprintf("%s%s", $activity->cmcompletion, $activity->cmname), $result);
+                        $result = str_replace($match, sprintf("%s %s", $activity->cmcompletion, $activity->cmname), $result);
                     }
                     break;
                 case "l":
