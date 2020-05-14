@@ -71,53 +71,47 @@ class filter_recitactivity extends moodle_text_filter {
         $course = $modinfo->get_course();
         $renderer = $PAGE->get_renderer('core','course');
         
-        if (!empty($modinfo->cms)) {
-            // Create array of visible activities sorted by the name length (we are only interested in properties name and url).
-            $sortedactivities = array();
-            foreach ($modinfo->cms as $cm) {
-                // Use normal access control and visibility, but exclude labels and hidden activities.
-                if ($cm->has_view()) {
-                    $sortedactivities[] = (object)array(
-                            'cminfo' => $cm,
-                            'name' => $cm->name,
-                            'url' => $cm->url,
-                            'id' => $cm->id,
-                            'visible' => $cm->uservisible,
-                            'namelen' => -strlen($cm->name) // Negative value for reverse sorting.
-                    );
-                }
-            }
-            foreach ($sortedactivities as $cm) {
-                $title = s(trim(strip_tags($cm->name)));
-                $currentname = trim($cm->name);
+        if(empty($modinfo->cms)) {
+            return;
+        }
 
-                // Avoid empty or unlinkable activity names.
-                if (!empty($title)) {
-                    $completioninfo = new completion_info($course);
-                    
-                    $cmcurrentname = $currentname;
-                    $cmname = $renderer->course_section_cm_name($cm->cminfo);
-                    $cmcompletion = $this->course_section_cm_completion($course, $completioninfo, $cm->cminfo);
-                    
-                    if(!$cm->visible)
-                    {
-                        $cmname = '';
-                        $cmcompletion = '';
-                        $cmcurrentname = ' ';
-                        $href_tag_begin = '';
-                        $href_tag_end = '';
-                    }
-
-                    $courseActivity = new stdClass();
-                    $courseActivity->cmname = $cmname;
-                    $courseActivity->currentname = $currentname;
-                    $courseActivity->cmcompletion = $cmcompletion;
-                    $courseActivity->cmcompletion = $cmcompletion;
-                    $courseActivity->href_tag_begin = html_writer::start_tag('a', array('class' => 'autolink', 'title' => $title, 'href' => $cm->url));
-					$courseActivity->href_tag_end = '</a>';
-                    $this->courseActivityList[] = $courseActivity;				
-                }
+        foreach ($modinfo->cms as $cm) {
+            // Use normal access control and visibility, but exclude labels and hidden activities.
+            if (!$cm->has_view()) {
+                continue;
             }
+
+            $title = s(trim(strip_tags($cm->name)));
+            $currentname = trim($cm->name);
+
+            // Avoid empty or unlinkable activity names.
+            if (empty($title) || ($cm->deletioninprogress == 1)) {
+                continue;
+            }
+
+            $completioninfo = new completion_info($course);
+            $cmcurrentname = $currentname;
+            $cmname = $renderer->course_section_cm_name($cm);
+            $cmcompletion = $this->course_section_cm_completion($course, $completioninfo, $cm);
+
+            $courseActivity = new stdClass();
+            $courseActivity->cmname = $cmname;
+            $courseActivity->currentname = $currentname;
+            $courseActivity->cmcompletion = $cmcompletion;
+            $courseActivity->id = $cm->id;
+            $courseActivity->uservisible = $cm->uservisible;
+            $courseActivity->href_tag_begin = html_writer::start_tag('a', array('class' => 'autolink', 'title' => $title, 'href' => $cm->url));
+            $courseActivity->href_tag_end = '</a>';
+
+            /*if(!$cm->visible){
+                $cmname = '';
+                $cmcompletion = '';
+                $cmcurrentname = ' ';
+                $href_tag_begin = '';
+                $href_tag_end = '';
+            }*/
+            
+            $this->courseActivityList[] = $courseActivity;
         }
     }
     
