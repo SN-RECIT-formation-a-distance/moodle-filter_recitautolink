@@ -1,31 +1,34 @@
 <?php
-// This file is part of a plugin written to be used on the free teaching platform : Moodle
-// Copyright (C) 2019 recit
-// 
-// This program is free software: you can redistribute it and/or modify
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
-// This program is distributed in the hope that it will be useful,
+//
+// Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
-// @package    filter_recitactivity
-// @subpackage RECIT
-// @copyright  RECIT {@link https://recitfad.ca}
-// @author     RECIT {@link https://recitfad.ca}
-// @license    {@link http://www.gnu.org/licenses/gpl-3.0.html} GNU GPL v3 or later
-// @developer  Studio XP : {@link https://www.studioxp.ca}
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+// Activity name filtering version control.
+
+/**
+ * This filter must be put before Auto-linking with Manage Filters to work properly.
+ *
+ * @package    filter_recitactivity
+ * @copyright  RECITFAD
+ * @author     RECITFAD
+ * @license    {@link http://www.gnu.org/licenses/gpl-3.0.html} GNU GPL v3 or later
+ */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2020052700;        // The current plugin version (Date: YYYYMMDDXX)
-$plugin->requires  = 2018050800;        // Requires this Moodle version
-$plugin->component = 'filter_recitactivity'; // Full name of the plugin (used for diagnostics)
+$plugin->version   = 2020052700;        // The current plugin version (Date: YYYYMMDDXX).
+$plugin->requires  = 2018050800;        // Requires this Moodle version.
+$plugin->component = 'filter_recitactivity'; // Full name of the plugin (used for diagnostics).
 $plugin->release = 'R8-V1.8';
 $plugin->maturity = MATURITY_BETA;
