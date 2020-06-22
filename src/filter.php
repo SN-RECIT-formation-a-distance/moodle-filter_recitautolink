@@ -30,6 +30,9 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Main class for filtering text.
  *
+ * Attention: do not utilise the global variables $PAGE and $COURSE. Instead, use $this->page and $this->page->course.
+ * When the filter is used by some ajax service (like TreeTopics) the global variables are not set as it should but $this->page is so.
+ * 
  * @copyright   RECITFAD
  * @license    {@link http://www.gnu.org/licenses/gpl-3.0.html} GNU GPL v3 or later
  */
@@ -38,6 +41,8 @@ class filter_recitactivity extends moodle_text_filter {
     protected $courseactivitieslist = array();
     /** @var array teachers list */
     protected $teacherslist = array();
+    /** @var object */
+    protected $page = null;
 
     /**
      * This function gets all teachers for a course.
@@ -67,7 +72,7 @@ class filter_recitactivity extends moodle_text_filter {
      * @param object $context
      */
     public function setup($page, $context) {
-        global $COURSE;
+        $this->page = $page;
 
         $coursectx = $context->get_course_context(false);
 
@@ -75,22 +80,20 @@ class filter_recitactivity extends moodle_text_filter {
             return;
         }
 
-        $this->load_course_teachers($COURSE->id);
+        $this->load_course_teachers($this->page->course->id);
 
-        $this->load_course_activyties_list();
+        $this->load_course_activities_list();
     }
 
     /**
      * Get array variable course activities list
      */
-    protected function load_course_activyties_list() {
-        global $COURSE, $PAGE;
-
+    protected function load_course_activities_list() {
         $this->courseactivitieslist = array();
 
-        $modinfo = get_fast_modinfo($COURSE->id);
+        $modinfo = get_fast_modinfo($this->page->course->id);
         $course = $modinfo->get_course();
-        $renderer = $PAGE->get_renderer('core', 'course');
+        $renderer = $this->page->get_renderer('core', 'course');
 
         if (empty($modinfo->cms)) {
             return;
@@ -135,7 +138,6 @@ class filter_recitactivity extends moodle_text_filter {
      * @return $item from array course activities list|null
      */
     protected function get_course_activity($name) {
-
         foreach ($this->courseactivitieslist as $item) {
             if ($item->currentname == $name) {
                 return $item;
