@@ -116,6 +116,7 @@ class filter_recitactivity extends moodle_text_filter {
             $completioninfo = new completion_info($course);
             $cmname = $renderer->course_section_cm_name($cm);
             $cmcompletion = $this->course_section_cm_completion($course, $completioninfo, $cm);
+            $isrestricted = ($cm->uservisible & !empty($cm->availableinfo));
 
             $courseactivity = new stdClass();
             $courseactivity->cmname = $cmname;
@@ -123,9 +124,20 @@ class filter_recitactivity extends moodle_text_filter {
             $courseactivity->cmcompletion = $cmcompletion;
             $courseactivity->id = $cm->id;
             $courseactivity->uservisible = $cm->uservisible;
-            $courseactivity->href_tag_begin = html_writer::start_tag('a', array('class' => 'autolink',
-                    'title' => $title, 'href' => $cm->url));
-            $courseactivity->href_tag_end = '</a>';
+
+            if($isrestricted){
+                $courseactivity->href_tag_begin = html_writer::start_tag('a', array('class' => 'autolink disabled ',
+                    'title' => $title, 'href' => '#'));
+                $courseactivity->href_tag_end = '</a>';
+                $courseactivity->cmname = "<a class='disabled' href='#'>$title</a>";
+                $courseactivity->cmcompletion = "";
+            }
+            else{
+                $courseactivity->href_tag_begin = html_writer::start_tag('a', array('class' => 'autolink ',
+                'title' => $title, 'href' => $cm->url));
+                $courseactivity->href_tag_end = '</a>';
+            }
+            
 
             $this->courseactivitieslist[] = $courseactivity;
         }
