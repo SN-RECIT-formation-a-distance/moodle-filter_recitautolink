@@ -50,17 +50,28 @@ class filter_recitactivity extends moodle_text_filter {
      * @param int $courseid
      */
     protected function load_course_teachers($courseid) {
-        global $DB;
+        global $DB;        
 
-        $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
-        $context = context_course::instance($courseid);
-        $result = get_role_users($role->id, $context);
-
-        foreach ($result as $teacher) {
-            $teacher->imagealt = sprintf("%s %s", $teacher->firstname, $teacher->lastname);
-        }
-
-        $this->teacherslist = array_values($result);
+		$moodleDB = $DB;
+		$refMoodleDB = new ReflectionObject($moodleDB);
+		$refProp1 = $refMoodleDB->getProperty('mysqli');
+		$refProp1->setAccessible(TRUE);
+		$mysqli = $refProp1->getValue($moodleDB);
+		
+		$query = "select t1.id as id, t1.firstname, t1.lastname, t1.email, t5.shortname as role, concat(t1.firstname, ' ', t1.lastname) as imagealt
+        from mdl_user as t1  
+        inner join mdl_user_enrolments as t2 on t1.id = t2.userid
+        inner join mdl_enrol as t3 on t2.enrolid = t3.id
+        inner join mdl_role_assignments as t4 on t1.id = t4.userid
+        inner join mdl_role as t5 on t4.roleid = t5.id
+        where t3.courseid = $courseid and t4.contextid in (select id from mdl_context where instanceid = $courseid) and t5.shortname in ('teacher', 'editingteacher', 'noneditingteacher')";
+		
+		$rst = $mysqli->query($query);
+		
+		$this->teacherslist = array();
+		while($obj = $rst->fetch_object()){
+			$this->teacherslist[] = $obj;
+		}
     }
 
     /**
