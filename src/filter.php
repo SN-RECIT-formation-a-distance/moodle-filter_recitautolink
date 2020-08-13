@@ -58,7 +58,8 @@ class filter_recitactivity extends moodle_text_filter {
 		$refProp1->setAccessible(TRUE);
 		$mysqli = $refProp1->getValue($moodleDB);
 		
-		$query = "select t1.id as id, t1.firstname, t1.lastname, t1.email, t5.shortname as role, concat(t1.firstname, ' ', t1.lastname) as imagealt
+        $query = "select t1.id as id, t1.firstname, t1.lastname, t1.email, t5.shortname as role, concat(t1.firstname, ' ', t1.lastname) as imagealt,
+        t1.picture, t1.firstnamephonetic, t1.lastnamephonetic, t1.middlename, t1.alternatename   
         from mdl_user as t1  
         inner join mdl_user_enrolments as t2 on t1.id = t2.userid
         inner join mdl_enrol as t3 on t2.enrolid = t3.id
