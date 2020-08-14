@@ -86,9 +86,8 @@ class filter_recitactivity extends moodle_text_filter {
     public function setup($page, $context) {
         $this->page = $page;
 
-        $coursectx = $context->get_course_context(false);
-
-        if (!$coursectx) {
+        // this filter is only applied where the courseId is greater than 1, it means, a real course.
+        if($this->page->course->id <= 1){
             return;
         }
 
