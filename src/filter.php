@@ -109,9 +109,6 @@ class filter_recitactivity extends moodle_text_filter {
         $tmp->cacherev = $DB->get_field('course', 'cacherev', array('id' => $this->page->course->id));
         $modinfo = get_fast_modinfo($tmp);
 
-        $course = $modinfo->get_course();
-        $renderer = $this->page->get_renderer('core', 'course');
-
         if (empty($modinfo->cms)) {
             return;
         }
@@ -130,9 +127,8 @@ class filter_recitactivity extends moodle_text_filter {
                 continue;
             }
 
-            $completioninfo = new completion_info($course);
-            $cmname = $renderer->course_section_cm_name($cm);
-            $cmcompletion = $this->course_section_cm_completion($course, $completioninfo, $cm);
+            $cmname = $this->get_cm_name($cm);
+            $cmcompletion = $this->course_section_cm_completion($this->page->course, $cm);
             $isrestricted = ($cm->uservisible & !empty($cm->availableinfo));
 
             $courseactivity = new stdClass();
@@ -158,6 +154,47 @@ class filter_recitactivity extends moodle_text_filter {
 
             $this->courseactivitieslist[] = $courseactivity;
         }
+    }
+
+    protected function get_cm_name(cm_info $mod) {
+        $output = '';
+        $url = $mod->url;
+        if (!$mod->is_visible_on_course_page() || !$url) {
+            // Nothing to be displayed to the user.
+            return $output;
+        }
+
+        //Accessibility: for files get description via icon, this is very ugly hack!
+        $instancename = $mod->get_formatted_name();
+        $altname = $mod->modfullname;
+        // Avoid unnecessary duplication: if e.g. a forum name already
+        // includes the word forum (or Forum, etc) then it is unhelpful
+        // to include that in the accessible description that is added.
+        if (false !== strpos(core_text::strtolower($instancename),
+                core_text::strtolower($altname))) {
+            $altname = '';
+        }
+        // File type after name, for alphabetic lists (screen reader).
+        if ($altname) {
+            $altname = get_accesshide(' '.$altname);
+        }
+
+        // Get on-click attribute value if specified and decode the onclick - it
+        // has already been encoded for display (puke).
+        $onclick = htmlspecialchars_decode($mod->onclick, ENT_QUOTES);
+
+        // Display link itself.
+        $activitylink = html_writer::empty_tag('img', array('src' => $mod->get_icon_url(),
+                'class' => 'iconlarge activityicon', 'alt' => '', 'role' => 'presentation', 'aria-hidden' => 'true')) .
+                html_writer::tag('span', $instancename . $altname, array('class' => 'instancename'));
+        if ($mod->uservisible) {
+            $output .= html_writer::link($url, $activitylink, array('class' => 'aalink', 'onclick' => $onclick));
+        } else {
+            // We may be displaying this just in order to show information
+            // about visibility, without the actual link ($mod->is_visible_on_course_page()).
+            $output .= html_writer::tag('div', $activitylink);
+        }
+        return $output;
     }
 
     /**
@@ -293,16 +330,16 @@ class filter_recitactivity extends moodle_text_filter {
      * @param cm_info $mod
      * @return string
      */
-    public function course_section_cm_completion($course, &$completioninfo, cm_info $mod) {
+    public function course_section_cm_completion($course, cm_info $mod) {
         global $CFG, $PAGE;
         $renderer = $PAGE->get_renderer('core', 'course');
         $output = '';
         if (!isloggedin() || isguestuser() || !$mod->uservisible) {
             return $output;
         }
-        if ($completioninfo === null) {
-            $completioninfo = new completion_info($course);
-        }
+        
+        $completioninfo = new completion_info($course);
+        
         $completion = $completioninfo->is_enabled($mod);
         if ($completion == COMPLETION_TRACKING_NONE) {
             if ($PAGE->user_is_editing()) {
@@ -311,7 +348,7 @@ class filter_recitactivity extends moodle_text_filter {
             return $output;
         }
 
-        $completiondata = $completioninfo->get_data($mod, true);
+        $completiondata = $completioninfo->get_data($mod);
         $completionicon = '';
 
         if ($PAGE->user_is_editing()) {
