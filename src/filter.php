@@ -100,9 +100,15 @@ class filter_recitactivity extends moodle_text_filter {
      * Get array variable course activities list
      */
     protected function load_course_activities_list() {
+        global $DB;
+        
         $this->courseactivitieslist = array();
 
-        $modinfo = get_fast_modinfo($this->page->course->id);
+        $tmp = new stdClass();
+        $tmp->id = $this->page->course->id;
+        $tmp->cacherev = $DB->get_field('course', 'cacherev', array('id' => $this->page->course->id));
+        $modinfo = get_fast_modinfo($tmp);
+
         $course = $modinfo->get_course();
         $renderer = $this->page->get_renderer('core', 'course');
 
