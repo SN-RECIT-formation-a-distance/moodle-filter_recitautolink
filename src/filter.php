@@ -165,7 +165,7 @@ class filter_recitactivity extends moodle_text_filter {
         }
 
         //Accessibility: for files get description via icon, this is very ugly hack!
-        $instancename = $mod->get_formatted_name();
+        $instancename = $mod->name; //$mod->get_formatted_name();
         $altname = $mod->modfullname;
         // Avoid unnecessary duplication: if e.g. a forum name already
         // includes the word forum (or Forum, etc) then it is unhelpful
@@ -386,7 +386,8 @@ class filter_recitactivity extends moodle_text_filter {
             }
         }
         if ($completionicon) {
-            $formattedname = html_entity_decode($mod->get_formatted_name(), ENT_QUOTES, 'UTF-8');
+            //$formattedname = html_entity_decode($mod->get_formatted_name(), ENT_QUOTES, 'UTF-8');
+            $formattedname = html_entity_decode($mod->name, ENT_QUOTES, 'UTF-8');
             if ($completiondata->overrideby) {
                 $args = new stdClass();
                 $args->modname = $formattedname;
