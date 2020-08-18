@@ -353,7 +353,6 @@ class filter_recitactivity extends moodle_text_filter {
 
     public function course_section_cm_completion(cm_info $mod, $completiondata) {
         global $CFG, $PAGE;
-        $renderer = $PAGE->get_renderer('core', 'course');
         $course = $this->page->course;
 
         $output = '';
@@ -417,7 +416,8 @@ class filter_recitactivity extends moodle_text_filter {
         if ($completionicon) {
             //$formattedname = html_entity_decode($mod->get_formatted_name(), ENT_QUOTES, 'UTF-8');
             $formattedname = html_entity_decode($mod->name, ENT_QUOTES, 'UTF-8');
-            if ($completiondata->overrideby) {
+            $imgalt = $formattedname;
+            /*if ($completiondata->overrideby) {
                 $args = new stdClass();
                 $args->modname = $formattedname;
                 $overridebyuser = \core_user::get_user($completiondata->overrideby, '*', MUST_EXIST);
@@ -425,13 +425,13 @@ class filter_recitactivity extends moodle_text_filter {
                 $imgalt = get_string('completion-alt-' . $completionicon, 'completion', $args);
             } else {
                 $imgalt = get_string('completion-alt-' . $completionicon, 'completion', $formattedname);
-            }
+            }*/
 
             if ($PAGE->user_is_editing()) {
                 // When editing, the icon is just an image.
                 $completionpixicon = new pix_icon('i/completion-'.$completionicon, $imgalt, '',
                     array('title' => $imgalt, 'class' => 'iconsmall'));
-                $output .= html_writer::tag('span', $renderer->render($completionpixicon),
+                $output .= html_writer::tag('span', $this->renderPixIcon($completionpixicon),
                     array('class' => 'autocompletion'));
             } else if ($completion == COMPLETION_TRACKING_MANUAL) {
                 $newstate =
@@ -460,144 +460,34 @@ class filter_recitactivity extends moodle_text_filter {
                     'type' => 'hidden', 'name' => 'modulename', 'value' => $formattedname));
                 $output .= html_writer::empty_tag('input', array(
                     'type' => 'hidden', 'name' => 'completionstate', 'value' => $newstate));
-                $output .= html_writer::tag('button',
-                $renderer->pix_icon('i/completion-' . $completionicon, $imgalt),
-                    array('class' => 'btn btn-link', 'aria-live' => 'assertive', 'style' => 'padding: 0px;'));
+                    
+                $completionpixicon = new pix_icon('i/completion-'.$completionicon, $imgalt, '');
+
+                $output .= html_writer::tag('button', $this->renderPixIcon($completionpixicon), array('class' => 'btn btn-link', 'aria-live' => 'assertive', 'style' => 'padding: 0px;'));
                 $output .= html_writer::end_tag('div');
                 $output .= html_writer::end_tag('form');
             } else {
                 // In auto mode, the icon is just an image.
                 $completionpixicon = new pix_icon('i/completion-'.$completionicon, $imgalt, '',
                     array('title' => $imgalt, 'style' => 'margin: 0px;'));
-                $output .= html_writer::tag('span', $renderer->render($completionpixicon),
+                $output .= html_writer::tag('span', $this->renderPixIcon($completionpixicon),
                     array('class' => 'autocompletion'));
             }
         }
         return $output;
 
     }
-    /**
-     * Check for completion icon.
-     *
-     * @param object $course
-     * @param completion_info $completioninfo
-     * @param cm_info $mod
-     * @return string
-     */
-    /*public function course_section_cm_completion($course, cm_info $mod) {
-        global $CFG, $PAGE;
-        $renderer = $PAGE->get_renderer('core', 'course');
-        $output = '';
-        if (!$mod->uservisible) {
-            return $output;
-        }
-        
-        $completioninfo = new completion_info($course);
-        
-        $completion = $completioninfo->is_enabled($mod);
-        if ($completion == COMPLETION_TRACKING_NONE) {
-            if ($PAGE->user_is_editing()) {
-                $output .= html_writer::span('&nbsp;', 'filler');
-            }
-            return $output;
+
+    protected function renderPixIcon(pix_icon $obj){
+        global $OUTPUT;
+
+        $template = $obj->export_for_template($OUTPUT);
+
+        $attrs = array();
+        foreach($template['attributes'] as $item){
+            $attrs[] = sprintf("%s='%s'", $item['name'], $item['value']);
         }
 
-        $completiondata = $completioninfo->get_data($mod);
-        $completionicon = '';
-
-        if ($PAGE->user_is_editing()) {
-            switch ($completion) {
-                case COMPLETION_TRACKING_MANUAL :
-                    $completionicon = 'manual-enabled';
-                    break;
-                case COMPLETION_TRACKING_AUTOMATIC :
-                    $completionicon = 'auto-enabled';
-                    break;
-            }
-        } else if ($completion == COMPLETION_TRACKING_MANUAL) {
-            switch ($completiondata->completionstate) {
-                case COMPLETION_INCOMPLETE:
-                    $completionicon = 'manual-n' . ($completiondata->overrideby ? '-override' : '');
-                    break;
-                case COMPLETION_COMPLETE:
-                    $completionicon = 'manual-y' . ($completiondata->overrideby ? '-override' : '');
-                    break;
-            }
-        } else { // Automatic.
-            switch ($completiondata->completionstate) {
-                case COMPLETION_INCOMPLETE:
-                    $completionicon = 'auto-n' . ($completiondata->overrideby ? '-override' : '');
-                    break;
-                case COMPLETION_COMPLETE:
-                    $completionicon = 'auto-y' . ($completiondata->overrideby ? '-override' : '');
-                    break;
-                case COMPLETION_COMPLETE_PASS:
-                    $completionicon = 'auto-pass';
-                    break;
-                case COMPLETION_COMPLETE_FAIL:
-                    $completionicon = 'auto-fail';
-                    break;
-            }
-        }
-        if ($completionicon) {
-            //$formattedname = html_entity_decode($mod->get_formatted_name(), ENT_QUOTES, 'UTF-8');
-            $formattedname = html_entity_decode($mod->name, ENT_QUOTES, 'UTF-8');
-            if ($completiondata->overrideby) {
-                $args = new stdClass();
-                $args->modname = $formattedname;
-                $overridebyuser = \core_user::get_user($completiondata->overrideby, '*', MUST_EXIST);
-                $args->overrideuser = fullname($overridebyuser);
-                $imgalt = get_string('completion-alt-' . $completionicon, 'completion', $args);
-            } else {
-                $imgalt = get_string('completion-alt-' . $completionicon, 'completion', $formattedname);
-            }
-
-            if ($PAGE->user_is_editing()) {
-                // When editing, the icon is just an image.
-                $completionpixicon = new pix_icon('i/completion-'.$completionicon, $imgalt, '',
-                    array('title' => $imgalt, 'class' => 'iconsmall'));
-                $output .= html_writer::tag('span', $renderer->render($completionpixicon),
-                    array('class' => 'autocompletion'));
-            } else if ($completion == COMPLETION_TRACKING_MANUAL) {
-                $newstate =
-                $completiondata->completionstate == COMPLETION_COMPLETE
-                ? COMPLETION_INCOMPLETE
-                : COMPLETION_COMPLETE;
-                // In manual mode the icon is a toggle form...
-
-                // If this completion state is used by the
-                // conditional activities system, we need to turn
-                // off the JS.
-                $extraclass = '';
-                if (!empty($CFG->enableavailability) &&
-                        core_availability\info::completion_value_used($course, $mod->id)) {
-                    $extraclass = ' preventjs';
-                }
-                $output .= html_writer::start_tag('form', array('method' => 'post',
-                    'action' => new moodle_url('/course/togglecompletion.php'),
-                    'class' => 'togglecompletion'. $extraclass, 'style' => 'display: inline;'));
-                $output .= html_writer::start_tag('div', array('style' => 'display: inline;'));
-                $output .= html_writer::empty_tag('input', array(
-                    'type' => 'hidden', 'name' => 'id', 'value' => $mod->id));
-                $output .= html_writer::empty_tag('input', array(
-                    'type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()));
-                $output .= html_writer::empty_tag('input', array(
-                    'type' => 'hidden', 'name' => 'modulename', 'value' => $formattedname));
-                $output .= html_writer::empty_tag('input', array(
-                    'type' => 'hidden', 'name' => 'completionstate', 'value' => $newstate));
-                $output .= html_writer::tag('button',
-                $renderer->pix_icon('i/completion-' . $completionicon, $imgalt),
-                    array('class' => 'btn btn-link', 'aria-live' => 'assertive', 'style' => 'padding: 0px;'));
-                $output .= html_writer::end_tag('div');
-                $output .= html_writer::end_tag('form');
-            } else {
-                // In auto mode, the icon is just an image.
-                $completionpixicon = new pix_icon('i/completion-'.$completionicon, $imgalt, '',
-                    array('title' => $imgalt, 'style' => 'margin: 0px;'));
-                $output .= html_writer::tag('span', $renderer->render($completionpixicon),
-                    array('class' => 'autocompletion'));
-            }
-        }
-        return $output;
-    }*/
+        return sprintf("<img %s/>", implode(" ", $attrs));
+    }
 }
