@@ -43,6 +43,8 @@ class filter_recitactivity extends moodle_text_filter {
     protected $teacherslist = array();
     /** @var object */
     protected $page = null;
+    /** @var object */
+    protected $mysqli = null;
 
     /**
      * This function gets all teachers for a course.
@@ -50,24 +52,18 @@ class filter_recitactivity extends moodle_text_filter {
      * @param int $courseid
      */
     protected function load_course_teachers($courseid) {
-        global $DB;        
+        if(count($this->teacherslist) > 0){ return; }
 
-		$moodleDB = $DB;
-		$refMoodleDB = new ReflectionObject($moodleDB);
-		$refProp1 = $refMoodleDB->getProperty('mysqli');
-		$refProp1->setAccessible(TRUE);
-		$mysqli = $refProp1->getValue($moodleDB);
-		
         $query = "select t1.id as id, t1.firstname, t1.lastname, t1.email, t5.shortname as role, concat(t1.firstname, ' ', t1.lastname) as imagealt,
         t1.picture, t1.firstnamephonetic, t1.lastnamephonetic, t1.middlename, t1.alternatename   
         from mdl_user as t1  
         inner join mdl_user_enrolments as t2 on t1.id = t2.userid
         inner join mdl_enrol as t3 on t2.enrolid = t3.id
-        inner join mdl_role_assignments as t4 on t1.id = t4.userid
-        inner join mdl_role as t5 on t4.roleid = t5.id
-        where t3.courseid = $courseid and t4.contextid in (select id from mdl_context where instanceid = $courseid) and t5.shortname in ('teacher', 'editingteacher', 'noneditingteacher')";
+        inner join mdl_role_assignments as t4 on t1.id = t4.userid and t4.contextid in (select id from mdl_context where instanceid = $courseid)
+        inner join mdl_role as t5 on t4.roleid = t5.id and t5.shortname in ('teacher', 'editingteacher', 'noneditingteacher')
+        where t3.courseid = $courseid";
 		
-		$rst = $mysqli->query($query);
+		$rst = $this->mysqli->query($query);
 		
 		$this->teacherslist = array();
 		while($obj = $rst->fetch_object()){
@@ -84,12 +80,20 @@ class filter_recitactivity extends moodle_text_filter {
      * @param object $context
      */
     public function setup($page, $context) {
+        global $DB;
+
         $this->page = $page;
 
         // this filter is only applied where the courseId is greater than 1, it means, a real course.
         if($this->page->course->id <= 1){
             return;
         }
+
+		$moodleDB = $DB;
+		$refMoodleDB = new ReflectionObject($moodleDB);
+		$refProp1 = $refMoodleDB->getProperty('mysqli');
+		$refProp1->setAccessible(TRUE);
+		$this->mysqli = $refProp1->getValue($moodleDB);
 
         $this->load_course_teachers($this->page->course->id);
 
@@ -100,18 +104,28 @@ class filter_recitactivity extends moodle_text_filter {
      * Get array variable course activities list
      */
     protected function load_course_activities_list() {
-        global $DB;
-        
+        global $USER;
+
+        if(count($this->courseactivitieslist) > 0){ return;}
+
         $this->courseactivitieslist = array();
 
-        $tmp = new stdClass();
-        $tmp->id = $this->page->course->id;
-        $tmp->cacherev = $DB->get_field('course', 'cacherev', array('id' => $this->page->course->id));
-        $modinfo = get_fast_modinfo($tmp);
+        $modinfo = get_fast_modinfo($this->page->course);
 
         if (empty($modinfo->cms)) {
             return;
         }
+
+        $query = "SELECT cmc.* FROM mdl_course_modules as cm
+                INNER JOIN mdl_course_modules_completion cmc ON cmc.coursemoduleid=cm.id 
+                WHERE cm.course={$this->page->course->id} AND cmc.userid=$USER->id";
+		
+		$rst = $this->mysqli->query($query);
+		
+		$cmCompletions = array();
+		while($obj = $rst->fetch_object()){
+			$cmCompletions[$obj->coursemoduleid] = $obj;
+		}
 
         foreach ($modinfo->cms as $cm) {
             // Use normal access control and visibility, but exclude labels and hidden activities.
@@ -126,9 +140,24 @@ class filter_recitactivity extends moodle_text_filter {
             if (empty($title) || ($cm->deletioninprogress == 1)) {
                 continue;
             }
-
+            
             $cmname = $this->get_cm_name($cm);
-            $cmcompletion = $this->course_section_cm_completion($this->page->course, $cm);
+
+            // Row not present counts as 'not complete'
+            $completiondata = new stdClass();
+            $completiondata->id = 0;
+            $completiondata->coursemoduleid = $cm->id;
+            $completiondata->userid = $USER->id;
+            $completiondata->completionstate = 0;
+            $completiondata->viewed = 0;
+            $completiondata->overrideby = null;
+            $completiondata->timemodified = 0;
+
+            if(isset($cmCompletions[$cm->id])){
+                $completiondata = $cmCompletions[$cm->id];
+            }
+
+            $cmcompletion = $this->course_section_cm_completion($cm, $completiondata);
             $isrestricted = ($cm->uservisible & !empty($cm->availableinfo));
 
             $courseactivity = new stdClass();
@@ -159,7 +188,8 @@ class filter_recitactivity extends moodle_text_filter {
     protected function get_cm_name(cm_info $mod) {
         $output = '';
         $url = $mod->url;
-        if (!$mod->is_visible_on_course_page() || !$url) {
+        //if (!$mod->is_visible_on_course_page() || !$url) {
+        if (!$url) {
             // Nothing to be displayed to the user.
             return $output;
         }
@@ -224,14 +254,13 @@ class filter_recitactivity extends moodle_text_filter {
     public function filter($text, array $options = array()) {
         global $USER, $OUTPUT, $COURSE;
 
-        // Check if we need to build filters.
-        if (strpos($text, '[[') === false or !is_string($text) or empty($text)) {
+        // this filter is only applied where the courseId is greater than 1, it means, a real course.
+        if($this->page->course->id <= 1){
             return $text;
         }
 
-        $coursectx = $this->context->get_course_context(false);
-
-        if (!$coursectx) {
+        // Check if we need to build filters.
+        if (strpos($text, '[[') === false or !is_string($text) or empty($text)) {
             return $text;
         }
 
@@ -293,7 +322,7 @@ class filter_recitactivity extends moodle_text_filter {
                     } else if ($complement == "user.email") {
                         $result = str_replace($match, $USER->email, $result);
                     } else if ($complement == "user.picture") {
-                        $picture = $OUTPUT->user_picture($USER, array('courseid' => $coursectx->instanceid, 'link' => false));
+                        $picture = $OUTPUT->user_picture($USER, array('courseid' => $this->page->course->id, 'link' => false));
                         $result = str_replace($match, $picture, $result);
                     } else if ($complement == "course.shortname") {
                         $result = str_replace($match, $COURSE->shortname, $result);
@@ -309,7 +338,7 @@ class filter_recitactivity extends moodle_text_filter {
                             } else if ($complement == "teacher$nb.email") {
                                 $result = str_replace($match, $teacher->email, $result);
                             } else if ($complement == "teacher$nb.picture") {
-                                $picture = $OUTPUT->user_picture($teacher, array('courseid' => $coursectx->instanceid,
+                                $picture = $OUTPUT->user_picture($teacher, array('courseid' => $this->page->course->id,
                                     'link' => false));
                                 $result = str_replace($match, $picture, $result);
                             }
@@ -322,6 +351,131 @@ class filter_recitactivity extends moodle_text_filter {
         return $result;
     }
 
+    public function course_section_cm_completion(cm_info $mod, $completiondata) {
+        global $CFG, $PAGE;
+        $renderer = $PAGE->get_renderer('core', 'course');
+        $course = $this->page->course;
+
+        $output = '';
+        if (!$mod->uservisible) {
+            return $output;
+        }
+        
+        $completion = $mod->completion; // Return course-module completion value
+
+        // First check global completion
+        if (!isset($CFG->enablecompletion) || $CFG->enablecompletion == COMPLETION_DISABLED) {
+            $completion = COMPLETION_DISABLED;
+        }
+        else if ($course->enablecompletion == COMPLETION_DISABLED) {   // Check course completion
+            $completion = COMPLETION_DISABLED;
+        }
+        
+        if ($completion == COMPLETION_TRACKING_NONE) {
+            if ($PAGE->user_is_editing()) {
+                $output .= html_writer::span('&nbsp;', 'filler');
+            }
+            return $output;
+        }
+
+        $completionicon = '';
+
+        if ($PAGE->user_is_editing()) {
+            switch ($completion) {
+                case COMPLETION_TRACKING_MANUAL :
+                    $completionicon = 'manual-enabled';
+                    break;
+                case COMPLETION_TRACKING_AUTOMATIC :
+                    $completionicon = 'auto-enabled';
+                    break;
+            }
+        } else if ($completion == COMPLETION_TRACKING_MANUAL) {
+            switch ($completiondata->completionstate) {
+                case COMPLETION_INCOMPLETE:
+                    $completionicon = 'manual-n' . ($completiondata->overrideby ? '-override' : '');
+                    break;
+                case COMPLETION_COMPLETE:
+                    $completionicon = 'manual-y' . ($completiondata->overrideby ? '-override' : '');
+                    break;
+            }
+        } else { // Automatic.
+            switch ($completiondata->completionstate) {
+                case COMPLETION_INCOMPLETE:
+                    $completionicon = 'auto-n' . ($completiondata->overrideby ? '-override' : '');
+                    break;
+                case COMPLETION_COMPLETE:
+                    $completionicon = 'auto-y' . ($completiondata->overrideby ? '-override' : '');
+                    break;
+                case COMPLETION_COMPLETE_PASS:
+                    $completionicon = 'auto-pass';
+                    break;
+                case COMPLETION_COMPLETE_FAIL:
+                    $completionicon = 'auto-fail';
+                    break;
+            }
+        }
+        if ($completionicon) {
+            //$formattedname = html_entity_decode($mod->get_formatted_name(), ENT_QUOTES, 'UTF-8');
+            $formattedname = html_entity_decode($mod->name, ENT_QUOTES, 'UTF-8');
+            if ($completiondata->overrideby) {
+                $args = new stdClass();
+                $args->modname = $formattedname;
+                $overridebyuser = \core_user::get_user($completiondata->overrideby, '*', MUST_EXIST);
+                $args->overrideuser = fullname($overridebyuser);
+                $imgalt = get_string('completion-alt-' . $completionicon, 'completion', $args);
+            } else {
+                $imgalt = get_string('completion-alt-' . $completionicon, 'completion', $formattedname);
+            }
+
+            if ($PAGE->user_is_editing()) {
+                // When editing, the icon is just an image.
+                $completionpixicon = new pix_icon('i/completion-'.$completionicon, $imgalt, '',
+                    array('title' => $imgalt, 'class' => 'iconsmall'));
+                $output .= html_writer::tag('span', $renderer->render($completionpixicon),
+                    array('class' => 'autocompletion'));
+            } else if ($completion == COMPLETION_TRACKING_MANUAL) {
+                $newstate =
+                $completiondata->completionstate == COMPLETION_COMPLETE
+                ? COMPLETION_INCOMPLETE
+                : COMPLETION_COMPLETE;
+                // In manual mode the icon is a toggle form...
+
+                // If this completion state is used by the
+                // conditional activities system, we need to turn
+                // off the JS.
+                $extraclass = '';
+                if (!empty($CFG->enableavailability) &&
+                        core_availability\info::completion_value_used($course, $mod->id)) {
+                    $extraclass = ' preventjs';
+                }
+                $output .= html_writer::start_tag('form', array('method' => 'post',
+                    'action' => new moodle_url('/course/togglecompletion.php'),
+                    'class' => 'togglecompletion'. $extraclass, 'style' => 'display: inline;'));
+                $output .= html_writer::start_tag('div', array('style' => 'display: inline;'));
+                $output .= html_writer::empty_tag('input', array(
+                    'type' => 'hidden', 'name' => 'id', 'value' => $mod->id));
+                $output .= html_writer::empty_tag('input', array(
+                    'type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()));
+                $output .= html_writer::empty_tag('input', array(
+                    'type' => 'hidden', 'name' => 'modulename', 'value' => $formattedname));
+                $output .= html_writer::empty_tag('input', array(
+                    'type' => 'hidden', 'name' => 'completionstate', 'value' => $newstate));
+                $output .= html_writer::tag('button',
+                $renderer->pix_icon('i/completion-' . $completionicon, $imgalt),
+                    array('class' => 'btn btn-link', 'aria-live' => 'assertive', 'style' => 'padding: 0px;'));
+                $output .= html_writer::end_tag('div');
+                $output .= html_writer::end_tag('form');
+            } else {
+                // In auto mode, the icon is just an image.
+                $completionpixicon = new pix_icon('i/completion-'.$completionicon, $imgalt, '',
+                    array('title' => $imgalt, 'style' => 'margin: 0px;'));
+                $output .= html_writer::tag('span', $renderer->render($completionpixicon),
+                    array('class' => 'autocompletion'));
+            }
+        }
+        return $output;
+
+    }
     /**
      * Check for completion icon.
      *
@@ -330,11 +484,11 @@ class filter_recitactivity extends moodle_text_filter {
      * @param cm_info $mod
      * @return string
      */
-    public function course_section_cm_completion($course, cm_info $mod) {
+    /*public function course_section_cm_completion($course, cm_info $mod) {
         global $CFG, $PAGE;
         $renderer = $PAGE->get_renderer('core', 'course');
         $output = '';
-        if (!isloggedin() || isguestuser() || !$mod->uservisible) {
+        if (!$mod->uservisible) {
             return $output;
         }
         
@@ -445,5 +599,5 @@ class filter_recitactivity extends moodle_text_filter {
             }
         }
         return $output;
-    }
+    }*/
 }
