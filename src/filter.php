@@ -133,8 +133,8 @@ class filter_recitactivity extends moodle_text_filter {
                 continue;
             }
 
-            $title = s(trim(strip_tags($cm->name)));
-            $currentname = trim($cm->name);
+            $title = s(trim(strip_tags($cm->__get('name'))));
+            $currentname = trim($cm->__get('name'));
 
             // Avoid empty or unlinkable activity names.
             if (empty($title) || ($cm->deletioninprogress == 1)) {
@@ -146,25 +146,25 @@ class filter_recitactivity extends moodle_text_filter {
             // Row not present counts as 'not complete'
             $completiondata = new stdClass();
             $completiondata->id = 0;
-            $completiondata->coursemoduleid = $cm->id;
+            $completiondata->coursemoduleid = $cm->__get('id');
             $completiondata->userid = $USER->id;
             $completiondata->completionstate = 0;
             $completiondata->viewed = 0;
             $completiondata->overrideby = null;
             $completiondata->timemodified = 0;
 
-            if(isset($cmCompletions[$cm->id])){
-                $completiondata = $cmCompletions[$cm->id];
+            if(isset($cmCompletions[$cm->__get('id')])){
+                $completiondata = $cmCompletions[$cm->__get('id')];
             }
 
             $cmcompletion = $this->course_section_cm_completion($cm, $completiondata);
-            $isrestricted = ($cm->uservisible & !empty($cm->availableinfo));
+            $isrestricted = ($cm->__get('uservisible') & !empty($cm->availableinfo));
 
             $courseactivity = new stdClass();
             $courseactivity->cmname = $cmname;
             $courseactivity->currentname = $currentname;
             $courseactivity->cmcompletion = $cmcompletion;
-            $courseactivity->id = $cm->id;
+            $courseactivity->id = $cm->__get('id');
             $courseactivity->uservisible = $cm->uservisible;
 
             if($isrestricted){
@@ -176,7 +176,7 @@ class filter_recitactivity extends moodle_text_filter {
             }
             else{
                 $courseactivity->href_tag_begin = html_writer::start_tag('a', array('class' => 'autolink ',
-                'title' => $title, 'href' => $cm->url));
+                'title' => $title, 'href' => $cm->__get('url')));
                 $courseactivity->href_tag_end = '</a>';
             }
             
@@ -187,7 +187,7 @@ class filter_recitactivity extends moodle_text_filter {
 
     protected function get_cm_name(cm_info $mod) {
         $output = '';
-        $url = $mod->url;
+        $url = $mod->__get('url');
         //if (!$mod->is_visible_on_course_page() || !$url) {
         if (!$url) {
             // Nothing to be displayed to the user.
@@ -195,8 +195,8 @@ class filter_recitactivity extends moodle_text_filter {
         }
 
         //Accessibility: for files get description via icon, this is very ugly hack!
-        $instancename = $mod->name; //$mod->get_formatted_name();
-        $altname = $mod->modfullname;
+        $instancename = $mod->__get('name'); //$mod->get_formatted_name();
+        $altname = $mod->__get('modfullname');
         // Avoid unnecessary duplication: if e.g. a forum name already
         // includes the word forum (or Forum, etc) then it is unhelpful
         // to include that in the accessible description that is added.
@@ -211,13 +211,13 @@ class filter_recitactivity extends moodle_text_filter {
 
         // Get on-click attribute value if specified and decode the onclick - it
         // has already been encoded for display (puke).
-        $onclick = htmlspecialchars_decode($mod->onclick, ENT_QUOTES);
+        $onclick = htmlspecialchars_decode($mod->__get('onclick'), ENT_QUOTES);
 
         // Display link itself.
         $activitylink = html_writer::empty_tag('img', array('src' => $mod->get_icon_url(),
                 'class' => 'iconlarge activityicon', 'alt' => '', 'role' => 'presentation', 'aria-hidden' => 'true')) .
                 html_writer::tag('span', $instancename . $altname, array('class' => 'instancename'));
-        if ($mod->uservisible) {
+        if ($mod->__get('uservisible')) {
             $output .= html_writer::link($url, $activitylink, array('class' => 'aalink', 'onclick' => $onclick));
         } else {
             // We may be displaying this just in order to show information
@@ -356,11 +356,11 @@ class filter_recitactivity extends moodle_text_filter {
         $course = $this->page->course;
 
         $output = '';
-        if (!$mod->uservisible) {
+        if (!$mod->__get('uservisible')) {
             return $output;
         }
         
-        $completion = $mod->completion; // Return course-module completion value
+        $completion = $mod->__get('completion'); // Return course-module completion value
 
         // First check global completion
         if (!isset($CFG->enablecompletion) || $CFG->enablecompletion == COMPLETION_DISABLED) {
@@ -415,7 +415,7 @@ class filter_recitactivity extends moodle_text_filter {
         }
         if ($completionicon) {
             //$formattedname = html_entity_decode($mod->get_formatted_name(), ENT_QUOTES, 'UTF-8');
-            $formattedname = html_entity_decode($mod->name, ENT_QUOTES, 'UTF-8');
+            $formattedname = html_entity_decode($mod->__get('name'), ENT_QUOTES, 'UTF-8');
             $imgalt = $formattedname;
             /*if ($completiondata->overrideby) {
                 $args = new stdClass();
@@ -445,7 +445,7 @@ class filter_recitactivity extends moodle_text_filter {
                 // off the JS.
                 $extraclass = '';
                 if (!empty($CFG->enableavailability) &&
-                        core_availability\info::completion_value_used($course, $mod->id)) {
+                        core_availability\info::completion_value_used($course, $mod->__get('id'))) {
                     $extraclass = ' preventjs';
                 }
                 $output .= html_writer::start_tag('form', array('method' => 'post',
@@ -453,7 +453,7 @@ class filter_recitactivity extends moodle_text_filter {
                     'class' => 'togglecompletion'. $extraclass, 'style' => 'display: inline;'));
                 $output .= html_writer::start_tag('div', array('style' => 'display: inline;'));
                 $output .= html_writer::empty_tag('input', array(
-                    'type' => 'hidden', 'name' => 'id', 'value' => $mod->id));
+                    'type' => 'hidden', 'name' => 'id', 'value' => $mod->__get('id')));
                 $output .= html_writer::empty_tag('input', array(
                     'type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()));
                 $output .= html_writer::empty_tag('input', array(
