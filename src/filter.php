@@ -127,7 +127,13 @@ class filter_recitactivity extends moodle_text_filter {
 			$cmCompletions[$obj->coursemoduleid] = $obj;
 		}
 
+        $avoidModules = array("label");
+
         foreach ($modinfo->cms as $cm) {
+            if(in_array($cm->__get('modname'), $avoidModules)){
+                continue;
+            }
+
             // Use normal access control and visibility, but exclude labels and hidden activities.
             if (!$cm->has_view()) {
                 continue;
