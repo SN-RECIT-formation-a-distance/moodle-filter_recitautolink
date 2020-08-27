@@ -41,6 +41,10 @@ class filter_recitactivity extends moodle_text_filter {
     protected $courseactivitieslist = array();
     /** @var array teachers list */
     protected $teacherslist = array();
+    /** @var array */
+    protected $cmcompletions = array();
+    /** @var array */
+    protected $modules = array();
     /** @var object */
     protected $page = null;
     /** @var object */
@@ -97,44 +101,54 @@ class filter_recitactivity extends moodle_text_filter {
 
         $this->load_course_teachers($this->page->course->id);
 
-        $this->load_course_activities_list();
+        $this->load_cm_completions();
+        $this->modules = get_fast_modinfo($this->page->course);
+
+        $this->courseactivitieslist = array();
+    }
+
+    protected function load_cm_completions() {
+        global $USER;
+
+        $query = "SELECT cmc.* FROM mdl_course_modules as cm
+        INNER JOIN mdl_course_modules_completion cmc ON cmc.coursemoduleid=cm.id 
+        WHERE cm.course={$this->page->course->id} AND cmc.userid=$USER->id";
+
+        $rst = $this->mysqli->query($query);
+
+        $this->cmcompletions = array();
+        while($obj = $rst->fetch_object()){
+            $this->cmcompletions[$obj->coursemoduleid] = $obj;
+        }
     }
 
     /**
      * Get array variable course activities list
      */
-    protected function load_course_activities_list() {
+    protected function load_course_activities_list($activityname) {
         global $USER;
-
-        if(count($this->courseactivitieslist) > 0){ return;}
-
-        $this->courseactivitieslist = array();
-
-        $modinfo = get_fast_modinfo($this->page->course);
-
-        if (empty($modinfo->cms)) {
-            return;
+        
+        // return le cache
+        if(isset($this->courseactivitieslist[$activityname])){
+            return $this->courseactivitieslist[$activityname];
         }
 
-        $query = "SELECT cmc.* FROM mdl_course_modules as cm
-                INNER JOIN mdl_course_modules_completion cmc ON cmc.coursemoduleid=cm.id 
-                WHERE cm.course={$this->page->course->id} AND cmc.userid=$USER->id";
-		
-		$rst = $this->mysqli->query($query);
-		
-		$cmCompletions = array();
-		while($obj = $rst->fetch_object()){
-			$cmCompletions[$obj->coursemoduleid] = $obj;
-		}
+        if (empty($this->modules->cms)) {
+            return null;
+        }
 
         $avoidModules = array("label");
 
-        foreach ($modinfo->cms as $cm) {
+        foreach ($this->modules->cms as $cm) {
             if(in_array($cm->__get('modname'), $avoidModules)){
                 continue;
             }
 
-            // Use normal access control and visibility, but exclude labels and hidden activities.
+            // load only the wanted activity
+            if($activityname != $cm->__get('name')){
+                continue;
+            }
+
             if (!$cm->has_view()) {
                 continue;
             }
@@ -146,7 +160,7 @@ class filter_recitactivity extends moodle_text_filter {
             if (empty($title) || ($cm->deletioninprogress == 1)) {
                 continue;
             }
-            
+
             $cmname = $this->get_cm_name($cm);
 
             // Row not present counts as 'not complete'
@@ -159,8 +173,8 @@ class filter_recitactivity extends moodle_text_filter {
             $completiondata->overrideby = null;
             $completiondata->timemodified = 0;
 
-            if(isset($cmCompletions[$cm->__get('id')])){
-                $completiondata = $cmCompletions[$cm->__get('id')];
+            if(isset($this->cmcompletions[$cm->__get('id')])){
+                $completiondata = $this->cmcompletions[$cm->__get('id')];
             }
 
             $cmcompletion = $this->course_section_cm_completion($cm, $completiondata);
@@ -187,8 +201,13 @@ class filter_recitactivity extends moodle_text_filter {
             }
             
 
-            $this->courseactivitieslist[] = $courseactivity;
+            // keep in cache
+            $this->courseactivitieslist[$activityname] = $courseactivity;
+
+            return $this->courseactivitieslist[$activityname];
         }
+
+        return null;
     }
 
     protected function get_cm_name(cm_info $mod) {
@@ -240,13 +259,7 @@ class filter_recitactivity extends moodle_text_filter {
      * @return $item from array course activities list|null
      */
     protected function get_course_activity($name) {
-        foreach ($this->courseactivitieslist as $item) {
-            if ($item->currentname == $name) {
-                return $item;
-            }
-        }
-
-        return null;
+        return $this->load_course_activities_list($name);
     }
 
     /**
