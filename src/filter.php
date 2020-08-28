@@ -50,145 +50,6 @@ class filter_recitactivity extends moodle_text_filter {
     /** @var object */
     protected $mysqli = null;
 
-    public function setup($page, $context) {
-        global $DB;
-
-        $this->page = $page;
-
-        // this filter is only applied where the courseId is greater than 1, it means, a real course.
-        if($this->page->course->id <= 1){
-            return;
-        }
-
-		$moodleDB = $DB;
-		$refMoodleDB = new ReflectionObject($moodleDB);
-		$refProp1 = $refMoodleDB->getProperty('mysqli');
-		$refProp1->setAccessible(TRUE);
-		$this->mysqli = $refProp1->getValue($moodleDB);
-
-        //$this->load_course_teachers($this->page->course->id);
-
-       // $this->load_cm_completions();
-        $this->modules = get_fast_modinfo($this->page->course);
-
-        $this->courseactivitieslist = array();
-    }
-/**
-     * Main filter function.
-     *
-     * {@inheritDoc}
-     * @see moodle_text_filter::filter()
-     * @param string $text
-     * @param array $options
-     */
-    public function filter($text, array $options = array()) {
-        global $USER, $OUTPUT, $COURSE;
-
-        // this filter is only applied where the courseId is greater than 1, it means, a real course.
-        if($this->page->course->id <= 1){
-            return $text;
-        }
-
-        // Check if we need to build filters.
-        if (strpos($text, '[[') === false or !is_string($text) or empty($text)) 
-        {
-            return $text;
-        }
-        
-           
-
-        
-       
-
-        $matches = array();
-
-        $sep = get_config('filter_recitactivity', 'character');
-
-        preg_match_all('#(\[\[)([^\]]+)(\]\])#', $text, $matches);
-
-        $matches = $matches[0]; // It will match the wanted RE, for instance [[i/Activité 3]].
-
-        $result = $text;
-        foreach ($matches as $match) {
-            $item = explode($sep, $match);
-
-            // In case "[[ActivityName]]".
-            if (count($item) == 1) {
-                $item[0] = str_replace("[[", "", $item[0]);
-                $complement = str_replace("]]", "", $item[0]);
-                $param = "l";
-            } else {
-                $complement = str_replace("]]", "", array_pop($item));
-                $param = str_replace("[[", "", implode("", $item));
-            }
-
-            switch ($param) {
-                case "i":
-                    $activity = $this->get_course_activity($complement);
-                    if ($activity != null) {
-                        $result = str_replace($match, $activity->cmname, $result);
-                    }
-                    break;
-                case "c":
-                    $this->load_cm_completions();
-                    $activity = $this->get_course_activity($complement);
-                    if ($activity != null) {
-                        $result = str_replace($match, sprintf("%s %s %s %s", $activity->cmcompletion,
-                                $activity->href_tag_begin, $activity->currentname, $activity->href_tag_end), $result);
-                    }
-                    break;
-                case "ci":
-                case "ic":
-                    $this->load_cm_completions();
-                    $activity = $this->get_course_activity($complement);
-                    if ($activity != null) {
-                        $result = str_replace($match, sprintf("%s %s", $activity->cmcompletion, $activity->cmname), $result);
-                    }
-                    break;
-                case "l":
-                    $activity = $this->get_course_activity($complement);
-                    if ($activity != null) {
-                        $result = str_replace($match, sprintf("%s%s%s", $activity->href_tag_begin, $activity->currentname,
-                                $activity->href_tag_end), $result);
-                    }
-                    break;
-                case "d":
-                     $this->load_course_teachers($this->page->course->id);
-                    if ($complement == "user.firstname") {
-                        $result = str_replace($match, $USER->firstname, $result);
-                    } else if ($complement == "user.lastname") {
-                        $result = str_replace($match, $USER->lastname, $result);
-                    } else if ($complement == "user.email") {
-                        $result = str_replace($match, $USER->email, $result);
-                    } else if ($complement == "user.picture") {
-                        $picture = $OUTPUT->user_picture($USER, array('courseid' => $this->page->course->id, 'link' => false));
-                        $result = str_replace($match, $picture, $result);
-                    } else if ($complement == "course.shortname") {
-                        $result = str_replace($match, $COURSE->shortname, $result);
-                    } else if ($complement == "course.fullname") {
-                        $result = str_replace($match, $COURSE->fullname, $result);
-                    } else {
-                        foreach ($this->teacherslist as $index => $teacher) {
-                            $nb = $index + 1;
-                            if ($complement == "teacher$nb.firstname") {
-                                $result = str_replace($match, $teacher->firstname, $result);
-                            } else if ($complement == "teacher$nb.lastname") {
-                                $result = str_replace($match, $teacher->lastname, $result);
-                            } else if ($complement == "teacher$nb.email") {
-                                $result = str_replace($match, $teacher->email, $result);
-                            } else if ($complement == "teacher$nb.picture") {
-                                $picture = $OUTPUT->user_picture($teacher, array('courseid' => $this->page->course->id,
-                                    'link' => false));
-                                $result = str_replace($match, $picture, $result);
-                            }
-                        }
-                    }
-                    break;
-            }
-        }
-
-        return $result;
-    }
     /**
      * This function gets all teachers for a course.
      *
@@ -222,7 +83,7 @@ class filter_recitactivity extends moodle_text_filter {
      * @param object $page
      * @param object $context
      */
-/*    public function setup($page, $context) {
+    public function setup($page, $context) {
         global $DB;
 
         $this->page = $page;
@@ -244,7 +105,7 @@ class filter_recitactivity extends moodle_text_filter {
         $this->modules = get_fast_modinfo($this->page->course);
 
         $this->courseactivitieslist = array();
-    }*/
+    }
 
     protected function load_cm_completions() {
         global $USER;
@@ -401,7 +262,113 @@ class filter_recitactivity extends moodle_text_filter {
         return $this->load_course_activities_list($name);
     }
 
-    
+    /**
+     * Main filter function.
+     *
+     * {@inheritDoc}
+     * @see moodle_text_filter::filter()
+     * @param string $text
+     * @param array $options
+     */
+    public function filter($text, array $options = array()) {
+        global $USER, $OUTPUT, $COURSE;
+
+        // this filter is only applied where the courseId is greater than 1, it means, a real course.
+        if($this->page->course->id <= 1){
+            return $text;
+        }
+
+        // Check if we need to build filters.
+        if (strpos($text, '[[') === false or !is_string($text) or empty($text)) {
+            return $text;
+        }
+
+        $matches = array();
+
+        $sep = get_config('filter_recitactivity', 'character');
+
+        preg_match_all('#(\[\[)([^\]]+)(\]\])#', $text, $matches);
+
+        $matches = $matches[0]; // It will match the wanted RE, for instance [[i/Activité 3]].
+
+        $result = $text;
+        foreach ($matches as $match) {
+            $item = explode($sep, $match);
+
+            // In case "[[ActivityName]]".
+            if (count($item) == 1) {
+                $item[0] = str_replace("[[", "", $item[0]);
+                $complement = str_replace("]]", "", $item[0]);
+                $param = "l";
+            } else {
+                $complement = str_replace("]]", "", array_pop($item));
+                $param = str_replace("[[", "", implode("", $item));
+            }
+
+            switch ($param) {
+                case "i":
+                    $activity = $this->get_course_activity($complement);
+                    if ($activity != null) {
+                        $result = str_replace($match, $activity->cmname, $result);
+                    }
+                    break;
+                case "c":
+                    $activity = $this->get_course_activity($complement);
+                    if ($activity != null) {
+                        $result = str_replace($match, sprintf("%s %s %s %s", $activity->cmcompletion,
+                                $activity->href_tag_begin, $activity->currentname, $activity->href_tag_end), $result);
+                    }
+                    break;
+                case "ci":
+                case "ic":
+                    $activity = $this->get_course_activity($complement);
+                    if ($activity != null) {
+                        $result = str_replace($match, sprintf("%s %s", $activity->cmcompletion, $activity->cmname), $result);
+                    }
+                    break;
+                case "l":
+                    $activity = $this->get_course_activity($complement);
+                    if ($activity != null) {
+                        $result = str_replace($match, sprintf("%s%s%s", $activity->href_tag_begin, $activity->currentname,
+                                $activity->href_tag_end), $result);
+                    }
+                    break;
+                case "d":
+                    if ($complement == "user.firstname") {
+                        $result = str_replace($match, $USER->firstname, $result);
+                    } else if ($complement == "user.lastname") {
+                        $result = str_replace($match, $USER->lastname, $result);
+                    } else if ($complement == "user.email") {
+                        $result = str_replace($match, $USER->email, $result);
+                    } else if ($complement == "user.picture") {
+                        $picture = $OUTPUT->user_picture($USER, array('courseid' => $this->page->course->id, 'link' => false));
+                        $result = str_replace($match, $picture, $result);
+                    } else if ($complement == "course.shortname") {
+                        $result = str_replace($match, $COURSE->shortname, $result);
+                    } else if ($complement == "course.fullname") {
+                        $result = str_replace($match, $COURSE->fullname, $result);
+                    } else {
+                        foreach ($this->teacherslist as $index => $teacher) {
+                            $nb = $index + 1;
+                            if ($complement == "teacher$nb.firstname") {
+                                $result = str_replace($match, $teacher->firstname, $result);
+                            } else if ($complement == "teacher$nb.lastname") {
+                                $result = str_replace($match, $teacher->lastname, $result);
+                            } else if ($complement == "teacher$nb.email") {
+                                $result = str_replace($match, $teacher->email, $result);
+                            } else if ($complement == "teacher$nb.picture") {
+                                $picture = $OUTPUT->user_picture($teacher, array('courseid' => $this->page->course->id,
+                                    'link' => false));
+                                $result = str_replace($match, $picture, $result);
+                            }
+                        }
+                    }
+                    break;
+            }
+        }
+
+        return $result;
+    }
 
     public function course_section_cm_completion(cm_info $mod, $completiondata) {
         global $CFG, $PAGE;
