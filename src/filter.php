@@ -99,9 +99,6 @@ class filter_recitactivity extends moodle_text_filter {
 		$refProp1->setAccessible(TRUE);
 		$this->mysqli = $refProp1->getValue($moodleDB);
 
-        $this->load_course_teachers($this->page->course->id);
-
-        $this->load_cm_completions();
         $this->modules = get_fast_modinfo($this->page->course);
 
         $this->courseactivitieslist = array();
@@ -109,6 +106,10 @@ class filter_recitactivity extends moodle_text_filter {
 
     protected function load_cm_completions() {
         global $USER;
+
+        if(count($this->cmcompletions) > 0){
+            return;
+        }
 
         $query = "SELECT cmc.* FROM mdl_course_modules as cm
         INNER JOIN mdl_course_modules_completion cmc ON cmc.coursemoduleid=cm.id 
@@ -313,6 +314,7 @@ class filter_recitactivity extends moodle_text_filter {
                     }
                     break;
                 case "c":
+                    $this->load_cm_completions();
                     $activity = $this->get_course_activity($complement);
                     if ($activity != null) {
                         $result = str_replace($match, sprintf("%s %s %s %s", $activity->cmcompletion,
@@ -321,6 +323,7 @@ class filter_recitactivity extends moodle_text_filter {
                     break;
                 case "ci":
                 case "ic":
+                    $this->load_cm_completions();
                     $activity = $this->get_course_activity($complement);
                     if ($activity != null) {
                         $result = str_replace($match, sprintf("%s %s", $activity->cmcompletion, $activity->cmname), $result);
@@ -334,6 +337,8 @@ class filter_recitactivity extends moodle_text_filter {
                     }
                     break;
                 case "d":
+                    $this->load_course_teachers($this->page->course->id);
+
                     if ($complement == "user.firstname") {
                         $result = str_replace($match, $USER->firstname, $result);
                     } else if ($complement == "user.lastname") {
