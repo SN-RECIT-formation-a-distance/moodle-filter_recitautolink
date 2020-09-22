@@ -512,6 +512,6 @@ class filter_recitactivity extends moodle_text_filter {
             $attrs[] = sprintf("%s='%s'", $item['name'], $item['value']);
         }
 
-        return sprintf("<img %s/>", implode(" ", $attrs));
+        return sprintf("<img %s style='width: 16px; height: 16px;'/>", implode(" ", $attrs));
     }
 }
