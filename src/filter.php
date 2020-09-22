@@ -493,7 +493,7 @@ class filter_recitactivity extends moodle_text_filter {
             } else {
                 // In auto mode, the icon is just an image.
                 $completionpixicon = new pix_icon('i/completion-'.$completionicon, $imgalt, '',
-                    array('title' => $imgalt, 'style' => 'margin: 0px;'));
+                    array('title' => $imgalt));
                 $output .= html_writer::tag('span', $this->renderPixIcon($completionpixicon),
                     array('class' => 'autocompletion'));
             }
