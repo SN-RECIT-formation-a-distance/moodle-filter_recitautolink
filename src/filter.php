@@ -56,15 +56,19 @@ class filter_recitactivity extends moodle_text_filter {
      * @param int $courseid
      */
     protected function load_course_teachers($courseid) {
+        global $CFG;
+
+        $prefix = $CFG->prefix;
+        
         if(count($this->teacherslist) > 0){ return; }
 
         $query = "select t1.id as id, t1.firstname, t1.lastname, t1.email, t5.shortname as role, concat(t1.firstname, ' ', t1.lastname) as imagealt,
         t1.picture, t1.firstnamephonetic, t1.lastnamephonetic, t1.middlename, t1.alternatename   
-        from mdl_user as t1  
-        inner join mdl_user_enrolments as t2 on t1.id = t2.userid
-        inner join mdl_enrol as t3 on t2.enrolid = t3.id
-        inner join mdl_role_assignments as t4 on t1.id = t4.userid and t4.contextid in (select id from mdl_context where instanceid = $courseid)
-        inner join mdl_role as t5 on t4.roleid = t5.id and t5.shortname in ('teacher', 'editingteacher', 'noneditingteacher')
+        from {$prefix}user as t1  
+        inner join {$prefix}user_enrolments as t2 on t1.id = t2.userid
+        inner join {$prefix}enrol as t3 on t2.enrolid = t3.id
+        inner join {$prefix}role_assignments as t4 on t1.id = t4.userid and t4.contextid in (select id from {$prefix}context where instanceid = $courseid)
+        inner join {$prefix}role as t5 on t4.roleid = t5.id and t5.shortname in ('teacher', 'editingteacher', 'noneditingteacher')
         where t3.courseid = $courseid";
 		
 		$rst = $this->mysqli->query($query);
@@ -105,14 +109,16 @@ class filter_recitactivity extends moodle_text_filter {
     }
 
     protected function load_cm_completions() {
-        global $USER;
+        global $USER, $CFG;
+
+        $prefix = $CFG->prefix;
 
         if(count($this->cmcompletions) > 0){
             return;
         }
 
-        $query = "SELECT cmc.* FROM mdl_course_modules as cm
-        INNER JOIN mdl_course_modules_completion cmc ON cmc.coursemoduleid=cm.id 
+        $query = "SELECT cmc.* FROM {$prefix}course_modules as cm
+        INNER JOIN {$prefix}course_modules_completion cmc ON cmc.coursemoduleid=cm.id 
         WHERE cm.course={$this->page->course->id} AND cmc.userid=$USER->id";
 
         $rst = $this->mysqli->query($query);
