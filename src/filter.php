@@ -45,6 +45,8 @@ class filter_recitactivity extends moodle_text_filter {
     protected $cmcompletions = array();
     /** @var array */
     protected $modules = array();
+    /** @var array */
+    protected $sectionslist = array();
     /** @var object */
     protected $page = null;
     /** @var object */
@@ -104,8 +106,31 @@ class filter_recitactivity extends moodle_text_filter {
 		$this->mysqli = $refProp1->getValue($moodleDB);
 
         $this->modules = get_fast_modinfo($this->page->course);
+        $this->sectionslist = $this->modules->get_section_info_all();
 
         $this->courseactivitieslist = array();
+    }
+
+    protected function get_section($name){
+        global $CFG;
+
+        foreach ($this->sectionslist as $section) {
+            $sectionname = (empty($section->name) ? strval($section->section) : $section->name);
+
+            if($sectionname == $name){
+                $sectionname = (empty($section->name) ?  get_string('section') . ' ' . strval($section->section) : $section->name);
+                $anchor = sprintf("%s-%ld", strtolower(get_string('section')), $section->section);
+
+                if($this->page->course->format == 'treetopics'){
+                    return sprintf("<a href='#' data-section='%s' onclick=\"M.recit.course.format.TreeTopics.instance.goToSection(event)\">%s</a>", $anchor, $sectionname);
+                }
+                else{
+                    return sprintf("<a href='%s/course/view.php?id=%ld#%s'>%s</a>", $CFG->wwwroot, $this->page->course->id, $anchor, $sectionname);
+                }
+            }
+        }
+
+        return null;
     }
 
     protected function load_cm_completions() {
@@ -185,7 +210,7 @@ class filter_recitactivity extends moodle_text_filter {
             }
 
             $cmcompletion = $this->course_section_cm_completion($cm, $completiondata);
-            $isrestricted = ($cm->__get('uservisible') & !empty($cm->availableinfo));
+            $isrestricted = (!$cm->__get('uservisible') || !empty($cm->availableinfo) || ($cm->__get('visible') == 0));
 
             $courseactivity = new stdClass();
             $courseactivity->cmname = $cmname;
@@ -340,6 +365,12 @@ class filter_recitactivity extends moodle_text_filter {
                     if ($activity != null) {
                         $result = str_replace($match, sprintf("%s%s%s", $activity->href_tag_begin, $activity->currentname,
                                 $activity->href_tag_end), $result);
+                    }
+                    break;
+                case "s":
+                    $link = $this->get_section($complement);
+                    if ($link != null) {
+                        $result = str_replace($match, $link, $result);
                     }
                     break;
                 case "d":
