@@ -38,7 +38,7 @@ $string['character_desc'] = 'Ceci repésente le caractère séparateur à utilis
 	<li>Lien vers une activité avec une case à cocher pour la complétion : [[<b style="color:red">c/</b>Nom de l\'activité]]</li>
     <li>Lien vers une activité avec icône et une case à cocher pour la complétion : [[<b style="color:red">i/c/</b>Nom de l\'activité]]</li>
     <li>Ouvrir le lien vers une activité dans une autre onglet : [[<b style="color:red">c/b/</b>Nom de l\'activité]] ou [[<b style="color:red">i/c/b/</b>Nom de l\'activité]]</li>
-    <li>Lien vers une section : [[<b style="color:red">s/</b>Nom de la section]]</li>
+    <li>Lien vers une section : [[<b style="color:red">s/</b>Nom de la section]] ou [[<b style="color:red">s/</b>/6]] pour se diriger vers la section 6 si son nom n\'est pas personnalisé (pas utilisable en mode édition).</li>
 	<li>Informations pour les noms du cours : [[<b style="color:red">d/</b>course.fullname]], [[<b style="color:red">d/</b>course.shortname]]</li>
 	<li>Informations de l\'élève, prénom, nom, courriel et avatar : [[<b style="color:red">d/</b>user.firstname]], [[<b style="color:red">d/</b>user.lastname]], [[<b style="color:red">d/</b>user.email]] et [[<b style="color:red">d/</b>user.picture]]</li>
 	<li>Informations pour le premier professeur, prénom, nom, courriel et avatar : [[<b style="color:red">d/</b>teacher1.firstname]], [[<b style="color:red">d/</b>teacher1.lastname]], [[<b style="color:red">d/</b>teacher1.email]] et [[<b style="color:red">d/</b>teacher1.picture]]</li>
