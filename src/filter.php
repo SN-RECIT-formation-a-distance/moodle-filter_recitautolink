@@ -157,12 +157,12 @@ class filter_recitactivity extends moodle_text_filter {
     /**
      * Get array variable course activities list
      */
-    protected function load_course_activities_list($activityname) {
+    protected function load_course_activities_list($activityname, $param = '', $target = '_self') {
         global $USER;
         
         // return le cache
-        if(isset($this->courseactivitieslist[$activityname])){
-            return $this->courseactivitieslist[$activityname];
+        if(isset($this->courseactivitieslist[$param.$activityname])){
+            return $this->courseactivitieslist[$param.$activityname];
         }
 
         if (empty($this->modules->cms)) {
@@ -193,7 +193,7 @@ class filter_recitactivity extends moodle_text_filter {
                 continue;
             }
 
-            $cmname = $this->get_cm_name($cm);
+            $cmname = $this->get_cm_name($cm, $target);
 
             // Row not present counts as 'not complete'
             $completiondata = new stdClass();
@@ -234,15 +234,15 @@ class filter_recitactivity extends moodle_text_filter {
             
 
             // keep in cache
-            $this->courseactivitieslist[$activityname] = $courseactivity;
+            $this->courseactivitieslist[$param.$activityname] = $courseactivity;
 
-            return $this->courseactivitieslist[$activityname];
+            return $this->courseactivitieslist[$param.$activityname];
         }
 
         return null;
     }
 
-    protected function get_cm_name(cm_info $mod) {
+    protected function get_cm_name(cm_info $mod, $target = '_self') {
         $output = '';
         $url = $mod->__get('url');
         //if (!$mod->is_visible_on_course_page() || !$url) {
@@ -275,7 +275,7 @@ class filter_recitactivity extends moodle_text_filter {
                 'class' => 'iconlarge activityicon', 'alt' => '', 'role' => 'presentation', 'aria-hidden' => 'true')) .
                 html_writer::tag('span', $instancename . $altname, array('class' => 'instancename'));
         if ($mod->__get('uservisible')) {
-            $output .= html_writer::link($url, $activitylink, array('class' => 'aalink', 'onclick' => $onclick));
+            $output .= html_writer::link($url, $activitylink, array('class' => 'aalink', 'onclick' => $onclick, 'target' => "$target"));
         } else {
             // We may be displaying this just in order to show information
             // about visibility, without the actual link ($mod->is_visible_on_course_page()).
@@ -290,8 +290,8 @@ class filter_recitactivity extends moodle_text_filter {
      * @param string $name
      * @return $item from array course activities list|null
      */
-    protected function get_course_activity($name) {
-        return $this->load_course_activities_list($name);
+    protected function get_course_activity($name, $param = '', $target = '_self') {
+        return $this->load_course_activities_list($name, $param, $target);
     }
 
     /**
@@ -337,31 +337,42 @@ class filter_recitactivity extends moodle_text_filter {
                 $param = str_replace("[[", "", implode("", $item));
             }
 
+            $target = '_self';
+            
+            if(in_array("b", str_split($param))){
+                $target = '_blank';
+            }
+
             switch ($param) {
                 case "i":
-                    $activity = $this->get_course_activity($complement);
+                case "ib":
+                    $activity = $this->get_course_activity($complement, $param, $target);
                     if ($activity != null) {
                         $result = str_replace($match, $activity->cmname, $result);
                     }
                     break;
                 case "c":
+                case "cb":
                     $this->load_cm_completions();
-                    $activity = $this->get_course_activity($complement);
+                    $activity = $this->get_course_activity($complement,  $param, $target);
                     if ($activity != null) {
                         $result = str_replace($match, sprintf("%s %s %s %s", $activity->cmcompletion,
                                 $activity->href_tag_begin, $activity->currentname, $activity->href_tag_end), $result);
                     }
                     break;
                 case "ci":
+                case "cib":
                 case "ic":
+                case "icb":
                     $this->load_cm_completions();
-                    $activity = $this->get_course_activity($complement);
+                    $activity = $this->get_course_activity($complement,  $param, $target);
                     if ($activity != null) {
                         $result = str_replace($match, sprintf("%s %s", $activity->cmcompletion, $activity->cmname), $result);
                     }
                     break;
                 case "l":
-                    $activity = $this->get_course_activity($complement);
+                case "lb":
+                    $activity = $this->get_course_activity($complement, $param, $target);
                     if ($activity != null) {
                         $result = str_replace($match, sprintf("%s%s%s", $activity->href_tag_begin, $activity->currentname,
                                 $activity->href_tag_end), $result);
