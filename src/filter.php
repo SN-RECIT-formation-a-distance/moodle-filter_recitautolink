@@ -51,7 +51,8 @@ class filter_recitactivity extends moodle_text_filter {
     protected $page = null;
     /** @var object */
     protected $mysqli = null;
-
+    /** @var object */
+    protected $context = null;
     /**
      * This function gets all teachers for a course.
      *
@@ -92,6 +93,7 @@ class filter_recitactivity extends moodle_text_filter {
     public function setup($page, $context) {
         global $DB;
 
+        $this->context = $context;
         $this->page = $page;
 
         // this filter is only applied where the courseId is greater than 1, it means, a real course.
@@ -111,7 +113,7 @@ class filter_recitactivity extends moodle_text_filter {
         $this->courseactivitieslist = array();
     }
 
-    protected function get_section($name){
+    protected function get_section($name, $target = '_self'){
         global $CFG;
 
         foreach ($this->sectionslist as $section) {
@@ -121,11 +123,11 @@ class filter_recitactivity extends moodle_text_filter {
                 $sectionname = (empty($section->name) ?  get_string('section') . ' ' . strval($section->section) : $section->name);
                 $anchor = sprintf("%s-%ld", strtolower(get_string('section')), $section->section);
 
-                if($this->page->course->format == 'treetopics'){
+                if(($this->context instanceof context_course) && ($this->page->course->format == 'treetopics') && ($target != '_blank')){
                     return sprintf("<a href='#' data-section='%s' onclick=\"M.recit.course.format.TreeTopics.instance.goToSection(event)\">%s</a>", $anchor, $sectionname);
                 }
                 else{
-                    return sprintf("<a href='%s/course/view.php?id=%ld#%s'>%s</a>", $CFG->wwwroot, $this->page->course->id, $anchor, $sectionname);
+                    return sprintf("<a href='%s/course/view.php?id=%ld#%s' target='$target'>%s</a>", $CFG->wwwroot, $this->page->course->id, $anchor, $sectionname);
                 }
             }
         }
@@ -220,9 +222,24 @@ class filter_recitactivity extends moodle_text_filter {
             $courseactivity->uservisible = $cm->uservisible;
 
             if($isrestricted){
-                $courseactivity->href_tag_begin = html_writer::start_tag('a', array('class' => 'autolink disabled ',
+                $courseactivity->href_tag_begin = html_writer::start_tag('a', array('class' => 'disabled ',
                     'title' => $title, 'href' => '#'));
                 $courseactivity->href_tag_end = '</a>';
+
+                $messageRestricted = "";
+                if(strlen($cm->availableinfo) > 0){
+                    $messageRestricted = $cm->availableinfo;
+                }
+                else if($cm->__get('visible') == 0){
+                    $messageRestricted = get_string('hiddenfromstudents');
+                }
+                
+                if(strlen($messageRestricted) > 0){
+                    $courseactivity->href_tag_end .= "<button type='button' class='btn btn-sm btn-link' data-html='true' data-container='body' title='".get_string('restricted')."' data-toggle='popover' data-placement='bottom' data-content='$messageRestricted'>";
+                    $courseactivity->href_tag_end .= "<i class='fa fa-info-circle'></i>";
+                    $courseactivity->href_tag_end .= "</button>";
+                }
+                
                 $courseactivity->cmname = "<a class='disabled' href='#'>$title</a>";
                 $courseactivity->cmcompletion = "";
             }
@@ -379,7 +396,8 @@ class filter_recitactivity extends moodle_text_filter {
                     }
                     break;
                 case "s":
-                    $link = $this->get_section($complement);
+                case "sb":
+                    $link = $this->get_section($complement, $target);
                     if ($link != null) {
                         $result = str_replace($match, $link, $result);
                     }
