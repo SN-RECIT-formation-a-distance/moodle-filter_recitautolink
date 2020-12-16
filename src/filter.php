@@ -143,7 +143,6 @@ class filter_recitactivity extends moodle_text_filter {
         if (empty($this->modules->cms)) {
             return null;
         }
-
         $avoidModules = array("label");
 
         foreach ($this->modules->cms as $cm) {
