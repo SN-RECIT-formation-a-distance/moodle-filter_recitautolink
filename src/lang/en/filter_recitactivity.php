@@ -28,15 +28,20 @@
 $string['filtername'] = "Recit's better activity names auto-linking";
 $string['privacy:metadata'] = 'The "Recit\'s better activity names auto-linking" plugin does not store any personal data.';
 $string['character'] = 'The separator character';
-$string['character_desc'] = 'Represents the separator character used in the filter. If the character is <b style="color:red">/</b>, the filter will search for it in [[i<b style="color:red">/</b>activityname]].
-	<br>All indicators (<b style="color:red"> i/, c/, d/ </b>) must be at the begenning of double brackets <b style="color:red">[[</b>.
-	<br><b>Integration code</b>
-	<br>Activity name link : [[activityname]]
-	<br>Activity name link with icon : [[<b style="color:red">i/</b>activityname]]
-	<br>Activity name link with completion checkbox : [[<b style="color:red">c/</b>activityname]]
-	<br>Activity name link with icon and completion checkbox : [[<b style="color:red">i/c/</b>activityname]]
-	<br>Course informations : [[<b style="color:red">d/</b>course.fullname]], [[<b style="color:red">d/</b>course.shortname]]
-	<br>Student firstname, lastname, email and avatar : [[<b style="color:red">d/</b>user.firstname]], [[<b style="color:red">d/</b>user.lastname]], [[<b style="color:red">d/</b>user.email]] and [[<b style="color:red">d/</b>user.picture]]
-	<br>First teacher firstname, lastname, email and avatar : [[<b style="color:red">d/</b>teacher1.firstname]], [[<b style="color:red">d/</b>teacher1.lastname]], [[<b style="color:red">d/</b>teacher1.email]] and [[<b style="color:red">d/</b>teacher1.picture]]
-	<br>Same for teacher2, teacher3, ... for all teachers for that course.
+$string['character_desc'] = 'Represents the separator character used in the filter. 
+    <br>If the character is <b style="color:red">/</b>, the filter will search for it in [[i<b style="color:red">/</b>activityname]].
+	<br>All indicators (<b style="color:red"> i/, c/, d/, b/, s/</b>) must be at the begenning of double brackets <b style="color:red">[[</b>.
+    <br><br><b>Integration code</b>
+    <ul>
+	<li>Activity name link : [[activityname]]</li>
+	<li>Activity name link with icon : [[<b style="color:red">i/</b>activityname]]</li>
+	<li>Activity name link with completion checkbox : [[<b style="color:red">c/</b>activityname]]</li>
+    <li>Activity name link with icon and completion checkbox : [[<b style="color:red">i/c/</b>activityname]]</li>
+    <li>Open the link to an activity in another tab : [[<b style="color:red">c/b/</b>activityname]] ou [[<b style="color:red">i/c/b/</b>activityname]]</li>
+    <li> Link to a section: [[<b style="color: red">s/</b>sectionname]] or [[<b style="color: red">s/</b>/6]] to go to section 6 if its name is not personalized (not usable in edit mode).</li>
+	<li>Course informations : [[<b style="color:red">d/</b>course.fullname]], [[<b style="color:red">d/</b>course.shortname]]</li>
+	<li>Student firstname, lastname, email and avatar : [[<b style="color:red">d/</b>user.firstname]], [[<b style="color:red">d/</b>user.lastname]], [[<b style="color:red">d/</b>user.email]] and [[<b style="color:red">d/</b>user.picture]]</li>
+	<li>First teacher firstname, lastname, email and avatar : [[<b style="color:red">d/</b>teacher1.firstname]], [[<b style="color:red">d/</b>teacher1.lastname]], [[<b style="color:red">d/</b>teacher1.email]] and [[<b style="color:red">d/</b>teacher1.picture]]</li>
+    <li>Same for teacher2, teacher3, ... for all teachers for that course.</li>
+    </ul>
 	';
