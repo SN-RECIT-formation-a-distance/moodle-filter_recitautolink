@@ -37,6 +37,8 @@ $string['character_desc'] = 'Represents the separator character used in the filt
 	<li>Activity name link with icon : [[<b style="color:red">i/</b>activityname]]</li>
 	<li>Activity name link with completion checkbox : [[<b style="color:red">c/</b>activityname]]</li>
     <li>Activity name link with icon and completion checkbox : [[<b style="color:red">i/c/</b>activityname]]</li>
+    <li>Change link name : [[/i/c/desc:"Name"/]]activityname</li>
+    <li>Add CSS classes : [[/i/c/class:"btn btn-primary"/]]</li>
     <li>Open the link to an activity in another tab : [[<b style="color:red">c/b/</b>activityname]] ou [[<b style="color:red">i/c/b/</b>activityname]]</li>
     <li> Link to a section: [[<b style="color: red">s/</b>sectionname]] or [[<b style="color: red">s/</b>/6]] to go to section 6 if its name is not personalized (not usable in edit mode).</li>
 	<li>Course informations : [[<b style="color:red">d/</b>course.fullname]], [[<b style="color:red">d/</b>course.shortname]]</li>

@@ -27,6 +27,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+define("DEFAULT_TARGET", '_self');
+
 /**
  * Main class for filtering text.
  *
@@ -53,6 +55,7 @@ class filter_recitactivity extends moodle_text_filter {
     protected $mysqli = null;
     /** @var object */
     protected $context = null;
+    
     /**
      * This function gets all teachers for a course.
      *
@@ -113,7 +116,7 @@ class filter_recitactivity extends moodle_text_filter {
         $this->courseactivitieslist = array();
     }
 
-    protected function get_section($name, $target = '_self'){
+    protected function get_section($name, $options = array()){
         global $CFG;
 
         foreach ($this->sectionslist as $section) {
@@ -121,13 +124,17 @@ class filter_recitactivity extends moodle_text_filter {
 
             if($sectionname == $name){
                 $sectionname = (empty($section->name) ?  get_string('section') . ' ' . strval($section->section) : $section->name);
+                if (isset($options['title'])) $sectionname = $options['title'];
+                $class = '';
+                if (isset($options['class'])) $class = $options['class'];
+                if (!isset($options['target'])) $options['target'] = DEFAULT_TARGET;
                 $anchor = sprintf("%s-%ld", strtolower(get_string('section')), $section->section);
 
-                if(($this->context instanceof context_course) && ($this->page->course->format == 'treetopics') && ($target != '_blank')){
-                    return sprintf("<a href='#' data-section='%s' onclick=\"M.recit.course.format.TreeTopics.instance.goToSection(event)\">%s</a>", $anchor, $sectionname);
+                if(($this->context instanceof context_course) && ($this->page->course->format == 'treetopics') && ($options['target'] != '_blank')){
+                    return sprintf("<a href='#' title='%s' class='%s' data-section='%s' onclick=\"M.recit.course.format.TreeTopics.instance.goToSection(event)\">%s</a>",  $sectionname.' - '.$name, $class, $anchor, $sectionname);
                 }
                 else{
-                    return sprintf("<a href='%s/course/view.php?id=%ld#%s' target='$target'>%s</a>", $CFG->wwwroot, $this->page->course->id, $anchor, $sectionname);
+                    return sprintf("<a title='%s' class='%s' href='%s/course/view.php?id=%ld#%s' target='".$options['target']."'>%s</a>", $sectionname.' - '.$name, $class, $CFG->wwwroot, $this->page->course->id, $anchor, $sectionname);
                 }
             }
         }
@@ -159,7 +166,7 @@ class filter_recitactivity extends moodle_text_filter {
     /**
      * Get array variable course activities list
      */
-    protected function load_course_activities_list($activityname, $param = '', $target = '_self') {
+    protected function load_course_activities_list($activityname, $param = '', $options = array()) {
         global $USER;
         
         // return le cache
@@ -186,15 +193,20 @@ class filter_recitactivity extends moodle_text_filter {
                 continue;
             }
 
-            $title = s(trim(strip_tags($cm->__get('name'))));
+            $name = s(trim(strip_tags($cm->__get('name'))));
+            $title = $name;
+            if (isset($options['title'])) $title = $options['title'];
+            $class = '';
+            if (isset($options['class'])) $class = $options['class'];
+            if (!isset($options['target'])) $options['target'] = DEFAULT_TARGET;
             $currentname = trim($cm->__get('name'));
 
             // Avoid empty or unlinkable activity names.
-            if (empty($title) || ($cm->deletioninprogress == 1)) {
+            if (empty($name) || ($cm->deletioninprogress == 1)) {
                 continue;
             }
 
-            $cmname = $this->get_cm_name($cm, $target);
+            $cmname = $this->get_cm_name($cm, $options);
 
             // Row not present counts as 'not complete'
             $completiondata = new stdClass();
@@ -243,7 +255,7 @@ class filter_recitactivity extends moodle_text_filter {
                 $courseactivity->cmcompletion = "";
             }
             else{
-                $courseactivity->href_tag_begin = html_writer::start_tag('a', array('class' => 'autolink ',
+                $courseactivity->href_tag_begin = html_writer::start_tag('a', array('class' => 'autolink '.$class,
                 'title' => $title, 'href' => $cm->__get('url')));
                 $courseactivity->href_tag_end = '</a>';
             }
@@ -258,7 +270,7 @@ class filter_recitactivity extends moodle_text_filter {
         return null;
     }
 
-    protected function get_cm_name(cm_info $mod, $target = '_self') {
+    protected function get_cm_name(cm_info $mod, $options = array()) {
         $output = '';
         $url = $mod->__get('url');
         //if (!$mod->is_visible_on_course_page() || !$url) {
@@ -270,6 +282,12 @@ class filter_recitactivity extends moodle_text_filter {
         //Accessibility: for files get description via icon, this is very ugly hack!
         $instancename = $mod->__get('name'); //$mod->get_formatted_name();
         $altname = $mod->__get('modfullname');
+        
+        $title = $instancename;
+        if (isset($options['title'])) $title = $options['title'].' - '.$instancename;
+        $class = '';
+        if (isset($options['class'])) $class = $options['class'];
+        if (!isset($options['target'])) $options['target'] = DEFAULT_TARGET; 
         // Avoid unnecessary duplication: if e.g. a forum name already
         // includes the word forum (or Forum, etc) then it is unhelpful
         // to include that in the accessible description that is added.
@@ -289,9 +307,9 @@ class filter_recitactivity extends moodle_text_filter {
         // Display link itself.
         $activitylink = html_writer::empty_tag('img', array('src' => $mod->get_icon_url(),
                 'class' => 'iconlarge activityicon', 'alt' => '', 'role' => 'presentation', 'aria-hidden' => 'true')) .
-                html_writer::tag('span', $instancename . $altname, array('class' => 'instancename'));
+                html_writer::tag('span', $title, array('class' => 'instancename'));
         if ($mod->__get('uservisible')) {
-            $output .= html_writer::link($url, $activitylink, array('class' => 'aalink', 'onclick' => $onclick, 'target' => "$target"));
+            $output .= html_writer::link($url, $activitylink, array('class' => 'aalink '.$class, 'onclick' => $onclick, 'target' => $options['target'], 'title' => $title));
         } else {
             // We may be displaying this just in order to show information
             // about visibility, without the actual link ($mod->is_visible_on_course_page()).
@@ -306,8 +324,8 @@ class filter_recitactivity extends moodle_text_filter {
      * @param string $name
      * @return $item from array course activities list|null
      */
-    protected function get_course_activity($name, $param = '', $target = '_self') {
-        return $this->load_course_activities_list($name, $param, $target);
+    protected function get_course_activity($name, $param = '', $options = array()) {
+        return $this->load_course_activities_list($name, $param, $options);
     }
 
     /**
@@ -339,30 +357,56 @@ class filter_recitactivity extends moodle_text_filter {
 
         $matches = $matches[0]; // It will match the wanted RE, for instance [[i/Activité 3]].
 
+
         $result = $text;
         foreach ($matches as $match) {
-            $item = explode($sep, $match);
+            $attributes = array();
+            $items = explode($sep, $match);
 
-            // In case "[[ActivityName]]".
-            if (count($item) == 1) {
-                $item[0] = str_replace("[[", "", $item[0]);
-                $complement = str_replace("]]", "", $item[0]);
-                $param = "l";
-            } else {
-                $complement = str_replace("]]", "", array_pop($item));
-                $param = str_replace("[[", "", implode("", $item));
+            //Build options array
+            foreach ($items as $i => $item){
+                $complement = str_replace("]]", "", $item);
+                $param = str_replace("[[", "", $item);
+                
+                // In case of /class:name
+                if(substr($param, 0, 5) == 'class' && strpos($param, ':') !== false && strpos($param, '"') !== false){
+                    $param = str_replace('"', '', $param);
+                    $str = explode(":", $param);
+                    $attributes['class'] = $str[1];
+                    unset($items[$i]);
+                }
+                
+                // In case of /desc:name
+                if(substr($param, 0, 4) == 'desc' && strpos($param, ':') !== false && strpos($param, '"') !== false){
+                    $param = str_replace('"', '', $param);
+                    $str = explode(":", $param);
+                    $attributes['title'] = $str[1];
+                    unset($items[$i]);
+                }
             }
 
-            $target = '_self';
+
+            // In case "[[ActivityName]]".
+            if (count($items) == 1) {
+                $items[0] = str_replace("[[", "", $items[0]);
+                $complement = str_replace("]]", "", $items[0]);
+                $param = "l";
+            } else {
+                $complement = str_replace("]]", "", array_pop($items));
+                $param = str_replace("[[", "", implode("", $items));
+            }
+
+
+            $options['target'] = '_self';
             
             if(in_array("b", str_split($param))){
-                $target = '_blank';
+                $options['target'] = '_blank';
             }
 
             switch ($param) {
                 case "i":
                 case "ib":
-                    $activity = $this->get_course_activity($complement, $param, $target);
+                    $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
                         $result = str_replace($match, $activity->cmname, $result);
                     }
@@ -370,7 +414,7 @@ class filter_recitactivity extends moodle_text_filter {
                 case "c":
                 case "cb":
                     $this->load_cm_completions();
-                    $activity = $this->get_course_activity($complement,  $param, $target);
+                    $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
                         $result = str_replace($match, sprintf("%s %s %s %s", $activity->cmcompletion,
                                 $activity->href_tag_begin, $activity->currentname, $activity->href_tag_end), $result);
@@ -381,14 +425,14 @@ class filter_recitactivity extends moodle_text_filter {
                 case "ic":
                 case "icb":
                     $this->load_cm_completions();
-                    $activity = $this->get_course_activity($complement,  $param, $target);
+                    $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
                         $result = str_replace($match, sprintf("%s %s", $activity->cmcompletion, $activity->cmname), $result);
                     }
                     break;
                 case "l":
                 case "lb":
-                    $activity = $this->get_course_activity($complement, $param, $target);
+                    $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
                         $result = str_replace($match, sprintf("%s%s%s", $activity->href_tag_begin, $activity->currentname,
                                 $activity->href_tag_end), $result);
@@ -396,7 +440,7 @@ class filter_recitactivity extends moodle_text_filter {
                     break;
                 case "s":
                 case "sb":
-                    $link = $this->get_section($complement, $target);
+                    $link = $this->get_section($complement, $attributes);
                     if ($link != null) {
                         $result = str_replace($match, $link, $result);
                     }

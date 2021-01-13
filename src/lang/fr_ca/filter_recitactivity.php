@@ -37,6 +37,8 @@ $string['character_desc'] = 'Ceci repésente le caractère séparateur à utilis
 	<li>Lien vers une activité avec icône : [[<b style="color:red">i/</b>Nom de l\'activité]]</li>
 	<li>Lien vers une activité avec une case à cocher pour la complétion : [[<b style="color:red">c/</b>Nom de l\'activité]]</li>
     <li>Lien vers une activité avec icône et une case à cocher pour la complétion : [[<b style="color:red">i/c/</b>Nom de l\'activité]]</li>
+    <li>Changer le nom du lien : [[/i/c/desc:"Nom"/</b>Nom de l\'activité]]</li>
+    <li>Mettre des classes CSS par example pour faire un bouton : [[/i/c/class:"btn btn-primary"/Nom de l\'activité]]</li>
     <li>Ouvrir le lien vers une activité dans une autre onglet : [[<b style="color:red">c/b/</b>Nom de l\'activité]] ou [[<b style="color:red">i/c/b/</b>Nom de l\'activité]]</li>
     <li>Lien vers une section : [[<b style="color:red">s/</b>Nom de la section]] ou [[<b style="color:red">s/</b>/6]] pour se diriger vers la section 6 si son nom n\'est pas personnalisé (pas utilisable en mode édition).</li>
 	<li>Informations pour les noms du cours : [[<b style="color:red">d/</b>course.fullname]], [[<b style="color:red">d/</b>course.shortname]]</li>
