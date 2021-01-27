@@ -55,6 +55,9 @@ class filter_recitactivity extends moodle_text_filter {
     protected $mysqli = null;
     /** @var object */
     protected $context = null;
+    /** @var boolean */
+    protected $isTeacher = false;
+
     
     /**
      * This function gets all teachers for a course.
@@ -62,7 +65,7 @@ class filter_recitactivity extends moodle_text_filter {
      * @param int $courseid
      */
     protected function load_course_teachers($courseid) {
-        global $CFG;
+        global $CFG, $USER;
 
         $prefix = $CFG->prefix;
         
@@ -81,8 +84,9 @@ class filter_recitactivity extends moodle_text_filter {
 		
 		$this->teacherslist = array();
 		while($obj = $rst->fetch_object()){
-			$this->teacherslist[] = $obj;
-		}
+            $this->teacherslist[] = $obj;
+            if ($USER->id == $obj->id) $this->isTeacher = true;
+        }
     }
 
     /**
@@ -178,6 +182,7 @@ class filter_recitactivity extends moodle_text_filter {
             return null;
         }
         $avoidModules = array("label");
+        $this->load_course_teachers($this->page->course->id);
 
         foreach ($this->modules->cms as $cm) {
             if(in_array($cm->__get('modname'), $avoidModules)){
@@ -224,6 +229,7 @@ class filter_recitactivity extends moodle_text_filter {
 
             $cmcompletion = $this->course_section_cm_completion($cm, $completiondata);
             $isrestricted = (!$cm->__get('uservisible') || !empty($cm->availableinfo) || ($cm->__get('visible') == 0));
+            if ($this->isTeacher) $isrestricted = false;
 
             $courseactivity = new stdClass();
             $courseactivity->cmname = $cmname;
@@ -239,7 +245,7 @@ class filter_recitactivity extends moodle_text_filter {
 
                 $messageRestricted = "";
                 if(strlen($cm->availableinfo) > 0){
-                    $messageRestricted = $cm->availableinfo;
+                    $messageRestricted = htmlspecialchars($cm->availableinfo);
                 }
                 else if($cm->__get('visible') == 0){
                     $messageRestricted = get_string('hiddenfromstudents');
