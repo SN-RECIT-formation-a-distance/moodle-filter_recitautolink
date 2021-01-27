@@ -252,7 +252,7 @@ class filter_recitactivity extends moodle_text_filter {
                 }
                 
                 if(strlen($messageRestricted) > 0){
-                    $courseactivity->href_tag_end .= "<button type='button' class='btn btn-sm btn-link' data-html='true' data-container='body' title='".get_string('restricted')."' data-toggle='popover' data-placement='bottom' data-content='$messageRestricted'>";
+                    $courseactivity->href_tag_end .= "<button type='button' class='btn btn-sm btn-link' data-html='true' data-container='body' title='".get_string('restricted')."' data-toggle='popover' data-placement='bottom' data-content=\"$messageRestricted\">";
                     $courseactivity->href_tag_end .= "<i class='fa fa-info-circle'></i>";
                     $courseactivity->href_tag_end .= "</button>";
                 }
