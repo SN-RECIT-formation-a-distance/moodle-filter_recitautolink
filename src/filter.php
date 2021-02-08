@@ -245,7 +245,7 @@ class filter_recitactivity extends moodle_text_filter {
 
                 $messageRestricted = "";
                 if(strlen($cm->availableinfo) > 0){
-                    $messageRestricted = htmlspecialchars($cm->availableinfo);
+                    $messageRestricted = htmlspecialchars(\core_availability\info::format_info($cm->availableinfo, $this->page->course->id));
                 }
                 else if($cm->__get('visible') == 0){
                     $messageRestricted = get_string('hiddenfromstudents');
