@@ -244,7 +244,7 @@ class filter_recitactivity extends moodle_text_filter {
                 $courseactivity->href_tag_end = '</a>';
 
                 $messageRestricted = "";
-                if(strlen($cm->availableinfo) > 0){
+                if ($cm->availableinfo){
                     $messageRestricted = htmlspecialchars(\core_availability\info::format_info($cm->availableinfo, $this->page->course->id));
                 }
                 else if($cm->__get('visible') == 0){
