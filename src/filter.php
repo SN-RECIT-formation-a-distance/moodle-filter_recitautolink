@@ -29,6 +29,8 @@ defined('MOODLE_INTERNAL') || die();
 
 define("DEFAULT_TARGET", '_self');
 
+require_once(__DIR__."/classes/dao.php");
+
 /**
  * Main class for filtering text.
  *
@@ -52,42 +54,11 @@ class filter_recitactivity extends moodle_text_filter {
     /** @var object */
     protected $page = null;
     /** @var object */
-    protected $mysqli = null;
+    protected $dao = null;
     /** @var object */
     protected $context = null;
     /** @var boolean */
     protected $isTeacher = false;
-
-    
-    /**
-     * This function gets all teachers for a course.
-     *
-     * @param int $courseid
-     */
-    protected function load_course_teachers($courseid) {
-        global $CFG, $USER;
-
-        $prefix = $CFG->prefix;
-        
-        if(count($this->teacherslist) > 0){ return; }
-
-        $query = "select t1.id as id, t1.firstname, t1.lastname, t1.email, t5.shortname as role, concat(t1.firstname, ' ', t1.lastname) as imagealt,
-        t1.picture, t1.firstnamephonetic, t1.lastnamephonetic, t1.middlename, t1.alternatename   
-        from {$prefix}user as t1  
-        inner join {$prefix}user_enrolments as t2 on t1.id = t2.userid
-        inner join {$prefix}enrol as t3 on t2.enrolid = t3.id
-        inner join {$prefix}role_assignments as t4 on t1.id = t4.userid and t4.contextid in (select id from {$prefix}context where instanceid = $courseid)
-        inner join {$prefix}role as t5 on t4.roleid = t5.id and t5.shortname in ('teacher', 'editingteacher', 'noneditingteacher')
-        where t3.courseid = $courseid";
-		
-		$rst = $this->mysqli->query($query);
-		
-		$this->teacherslist = array();
-		while($obj = $rst->fetch_object()){
-            $this->teacherslist[] = $obj;
-            if ($USER->id == $obj->id) $this->isTeacher = true;
-        }
-    }
 
     /**
      * Setup function loads teachers and activities.
@@ -98,8 +69,6 @@ class filter_recitactivity extends moodle_text_filter {
      * @param object $context
      */
     public function setup($page, $context) {
-        global $DB;
-
         $this->context = $context;
         $this->page = $page;
 
@@ -108,16 +77,29 @@ class filter_recitactivity extends moodle_text_filter {
             return;
         }
 
-		$moodleDB = $DB;
-		$refMoodleDB = new ReflectionObject($moodleDB);
-		$refProp1 = $refMoodleDB->getProperty('mysqli');
-		$refProp1->setAccessible(TRUE);
-		$this->mysqli = $refProp1->getValue($moodleDB);
-
+        $this->dao = dao_filter_recitautolink_factory::getInstance()->getDAO();
         $this->modules = get_fast_modinfo($this->page->course);
         $this->sectionslist = $this->modules->get_section_info_all();
-
         $this->courseactivitieslist = array();
+    }
+
+    /**
+     * This function gets all teachers for a course.
+     *
+     * @param int $courseid
+     */
+    protected function load_course_teachers($courseid) {
+        global $USER;
+
+        if(count($this->teacherslist) > 0){ return; }
+        	
+		$this->teacherslist = $this->dao->load_course_teachers($courseid);
+		
+        foreach($this->teacherslist as $item){
+            if ($USER->id == $item->id){
+                $this->isTeacher = true;
+            } 
+        }
     }
 
     protected function get_section($name, $options = array()){
@@ -147,24 +129,9 @@ class filter_recitactivity extends moodle_text_filter {
     }
 
     protected function load_cm_completions() {
-        global $USER, $CFG;
+        if(count($this->cmcompletions) > 0){ return; }
 
-        $prefix = $CFG->prefix;
-
-        if(count($this->cmcompletions) > 0){
-            return;
-        }
-
-        $query = "SELECT cmc.* FROM {$prefix}course_modules as cm
-        INNER JOIN {$prefix}course_modules_completion cmc ON cmc.coursemoduleid=cm.id 
-        WHERE cm.course={$this->page->course->id} AND cmc.userid=$USER->id";
-
-        $rst = $this->mysqli->query($query);
-
-        $this->cmcompletions = array();
-        while($obj = $rst->fetch_object()){
-            $this->cmcompletions[$obj->coursemoduleid] = $obj;
-        }
+        $this->cmcompletions =  $this->dao->load_cm_completions($this->page->course->id);
     }
 
     /**
@@ -358,6 +325,9 @@ class filter_recitactivity extends moodle_text_filter {
         $matches = array();
 
         $sep = get_config('filter_recitactivity', 'character');
+        if(empty($sep)){
+            $sep = "/"; // Caractère servant de séparateur. Défaut : /
+        }
 
         preg_match_all('#(\[\[)([^\]]+)(\]\])#', $text, $matches);
 
