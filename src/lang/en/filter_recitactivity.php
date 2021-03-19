@@ -28,6 +28,8 @@
 $string['filtername'] = "Recit's better activity names auto-linking";
 $string['privacy:metadata'] = 'The "Recit\'s better activity names auto-linking" plugin does not store any personal data.';
 $string['character'] = 'The separator character';
+$string['teacherbygroup'] = 'Show teachers in user\'s group only';
+$string['teacherbygroup_desc'] = 'If this is off, d/teacher will display all teachers of the course regardless of the group';
 $string['character_desc'] = 'Represents the separator character used in the filter. 
     <br>If the character is <b style="color:red">/</b>, the filter will search for it in [[i<b style="color:red">/</b>activityname]].
 	<br>All indicators (<b style="color:red"> i/, c/, d/, b/, s/</b>) must be at the begenning of double brackets <b style="color:red">[[</b>.

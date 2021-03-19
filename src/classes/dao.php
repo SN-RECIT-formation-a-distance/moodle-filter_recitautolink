@@ -23,10 +23,11 @@ abstract class dao_filter_recitautolink implements i_filter_recitautolink_dao{
      *
      * @param int $courseid
      */
-    public function load_course_teachers($courseid){
-        global $CFG;
+    public function load_course_teachers($courseid, $group = false){
+        global $CFG, $USER;
 
         $prefix = $CFG->prefix;
+        $where = "where t3.courseid = $courseid";
         
         $query = "select t1.id as id, t1.firstname, t1.lastname, t1.email, t5.shortname as role, concat(t1.firstname, ' ', t1.lastname) as imagealt,
         t1.picture, t1.firstnamephonetic, t1.lastnamephonetic, t1.middlename, t1.alternatename   
@@ -34,9 +35,14 @@ abstract class dao_filter_recitautolink implements i_filter_recitautolink_dao{
         inner join {$prefix}user_enrolments as t2 on t1.id = t2.userid
         inner join {$prefix}enrol as t3 on t2.enrolid = t3.id
         inner join {$prefix}role_assignments as t4 on t1.id = t4.userid and t4.contextid in (select id from {$prefix}context where instanceid = $courseid)
-        inner join {$prefix}role as t5 on t4.roleid = t5.id and t5.shortname in ('teacher', 'editingteacher', 'noneditingteacher')
-        where t3.courseid = $courseid";
+        inner join {$prefix}role as t5 on t4.roleid = t5.id and t5.shortname in ('teacher', 'editingteacher', 'noneditingteacher') ";
+        if ($group){
+            $query .= "inner join {$prefix}groups_members as t6 on t6.userid = t1.id ";
+            $where .= " and t6.groupid IN (select groupid from {$prefix}groups_members where userid=$USER->id)";
+        }
 
+        $query .= "$where ORDER BY CONCAT(t1.firstname, t1.lastname) ASC";
+        
         $rst = $this->exec_query($query);
 
         $result = array();

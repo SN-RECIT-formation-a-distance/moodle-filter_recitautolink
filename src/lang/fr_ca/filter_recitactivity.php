@@ -27,6 +27,8 @@
 
 $string['filtername'] = "Liens automatiques améliorés du RÉCIT";
 $string['privacy:metadata'] = 'Le plugin "Liens automatiques améliorés du RÉCIT" ne conserve aucune donnée.';
+$string['teacherbygroup'] = 'Afficher les professeurs par groupe seulement';
+$string['teacherbygroup_desc'] = 'Si ceci est à off, d/teacher va afficher tous les professeurs du cours.';
 $string['character'] = 'Caractère servant de séparateur';
 $string['character_desc'] = 'Ceci repésente le caractère séparateur à utiliser dans le filtre.
     <br>Si le caractère est <b style="color:red">/</b>, la syntaxe sera la suivante [[i<b style="color:red">/</b>Nom de l\'activité]].

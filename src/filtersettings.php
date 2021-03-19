@@ -31,3 +31,6 @@ $settings->add(new admin_setting_configtext('filter_recitactivity/character',
         get_string('character', 'filter_recitactivity'),
         get_string('character_desc', 'filter_recitactivity'), '/', PARAM_NOTAGS));
 
+        $settings->add(new admin_setting_configcheckbox('filter_recitactivity/teacherbygroup',
+                get_string('teacherbygroup', 'filter_recitactivity'),
+                get_string('teacherbygroup_desc', 'filter_recitactivity'), 1));

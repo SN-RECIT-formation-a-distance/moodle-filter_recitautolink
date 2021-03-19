@@ -88,12 +88,12 @@ class filter_recitactivity extends moodle_text_filter {
      *
      * @param int $courseid
      */
-    protected function load_course_teachers($courseid) {
+    protected function load_course_teachers($courseid, $group = false) {
         global $USER;
 
         if(count($this->teacherslist) > 0){ return; }
         	
-		$this->teacherslist = $this->dao->load_course_teachers($courseid);
+		$this->teacherslist = $this->dao->load_course_teachers($courseid, $group);
 		
         foreach($this->teacherslist as $item){
             if ($USER->id == $item->id){
@@ -325,6 +325,7 @@ class filter_recitactivity extends moodle_text_filter {
         $matches = array();
 
         $sep = get_config('filter_recitactivity', 'character');
+        $showteacherbygroup = get_config('filter_recitactivity', 'teacherbygroup');
         if(empty($sep)){
             $sep = "/"; // Caractère servant de séparateur. Défaut : /
         }
@@ -422,7 +423,7 @@ class filter_recitactivity extends moodle_text_filter {
                     }
                     break;
                 case "d":
-                    $this->load_course_teachers($this->page->course->id);
+                    $this->load_course_teachers($this->page->course->id, $showteacherbygroup);
 
                     if ($complement == "user.firstname") {
                         $result = str_replace($match, $USER->firstname, $result);
