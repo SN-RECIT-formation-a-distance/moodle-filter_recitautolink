@@ -31,6 +31,9 @@ define("DEFAULT_TARGET", '_self');
 
 require_once(__DIR__."/classes/dao.php");
 
+require_once(__DIR__ . '/../../h5p/lib.php');
+use core_h5p\local\library\autoloader;
+
 /**
  * Main class for filtering text.
  *
@@ -422,6 +425,12 @@ class filter_recitactivity extends moodle_text_filter {
                         $result = str_replace($match, $link, $result);
                     }
                     break;
+                case "h5p":
+                    $h5p = $this->getH5PFromName($complement);
+                    if ($h5p){
+                        $result = str_replace($match, $h5p, $result);
+                    }
+                    break;
                 case "d":
                     $this->load_course_teachers($this->page->course->id, $showteacherbygroup);
 
@@ -459,6 +468,19 @@ class filter_recitactivity extends moodle_text_filter {
         }
 
         return $result;
+    }
+
+    public function getH5PFromName($name){
+        $list = \repository_contentbank\contentbank_search::get_search_contents($name);
+        if (!isset($list[0])) return;
+        $h5p = $list[0];
+        $source = json_decode(base64_decode($h5p['source']));
+        autoloader::register();
+
+
+        $url  = \moodle_url::make_pluginfile_url($source->contextid, 'contentbank', 'public', $source->itemid.'/'. $source->filename, null, null );
+        $url = $url->out();
+        return "<div class='h5p-placeholder' contenteditable='false'>$url</div>";
     }
 
     public function course_section_cm_completion(cm_info $mod, $completiondata) {
