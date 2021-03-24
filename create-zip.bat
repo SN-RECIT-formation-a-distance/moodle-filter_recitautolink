@@ -1,6 +1,6 @@
 echo off
 set zipName=filter_recitactivity
-set pluginName=filter_recitactivity
+set pluginName=recitactivity
 
 rem remove the current 
 del %zipName%
