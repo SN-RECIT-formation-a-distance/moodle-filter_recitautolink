@@ -45,7 +45,7 @@ $string['character_desc'] = 'Represents the separator character used in the filt
     <li> Link to a section: [[<b style="color: red">s/</b>sectionname]] or [[<b style="color: red">s/</b>/6]] to go to section 6 if its name is not personalized (not usable in edit mode).</li>
 	<li>Course informations : [[<b style="color:red">d/</b>course.fullname]], [[<b style="color:red">d/</b>course.shortname]]</li>
 	<li>Student firstname, lastname, email and avatar : [[<b style="color:red">d/</b>user.firstname]], [[<b style="color:red">d/</b>user.lastname]], [[<b style="color:red">d/</b>user.email]] and [[<b style="color:red">d/</b>user.picture]]</li>
-	<li>First teacher firstname, lastname, email and avatar : [[<b style="color:red">d/</b>teacher1.firstname]], [[<b style="color:red">d/</b>teacher1.lastname]], [[<b style="color:red">d/</b>teacher1.email]] and [[<b style="color:red">d/</b>teacher1.picture]]</li>
+	<li>First teacher firstname, lastname, email and avatar : [[<b style="color:red">d/</b>teacher1.firstname]], [[<b style="color:red">d/</b>teacher1.lastname]], [[<b style="color:red">d/</b>teacher1.email]] and [[<b style="color:red">d/</b>teacher1.picture]]. The teacher must be in the group for his name to appear.</li>
     <li>Same for teacher2, teacher3, ... for all teachers for that course.</li>
     </ul>
 	';
