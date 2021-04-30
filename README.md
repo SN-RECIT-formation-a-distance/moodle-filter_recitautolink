@@ -40,6 +40,7 @@ Integration code
     Same for teacher2, teacher3, ... for all teachers for that course.
     Link to H5P content: [[<b style="color:red">h5p/</b>Name of H5P]]
     
- #Plus d'information / More informations
+ # Plus d'information / More informations
+ 
   https://recitfad.ca/moodledocs/
     
