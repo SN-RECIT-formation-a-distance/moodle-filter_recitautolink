@@ -416,7 +416,9 @@ class filter_recitactivity extends moodle_text_filter {
                 case "lb":
                     $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
-                        $result = str_replace($match, sprintf("%s%s%s", $activity->href_tag_begin, $activity->currentname,
+                        $title = $activity->currentname;
+                        if (isset($attributes['title'])) $title = $attributes['title'];
+                        $result = str_replace($match, sprintf("%s%s%s", $activity->href_tag_begin, $title,
                                 $activity->href_tag_end), $result);
                     }
                     break;
