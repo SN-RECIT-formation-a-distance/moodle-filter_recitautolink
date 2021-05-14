@@ -367,7 +367,7 @@ class filter_recitactivity extends moodle_text_filter {
 
 
             // In case "[[ActivityName]]".
-            if (count($items) == 1 && strpos($param, '[[') !== false) {
+            if (count($items) == 1 && strpos($items[0], '[[') !== false) {
                 $items[0] = str_replace("[[", "", $items[0]);
                 $complement = str_replace("]]", "", $items[0]);
                 $param = "l";
