@@ -367,7 +367,7 @@ class filter_recitactivity extends moodle_text_filter {
 
 
             // In case "[[ActivityName]]".
-            if (count($items) == 1 && strpos($items[0], '[[') !== false) {
+            if (count($items) == 1 && isset($items[0]) && strpos($items[0], '[[') !== false) {
                 $items[0] = str_replace("[[", "", $items[0]);
                 $complement = str_replace("]]", "", $items[0]);
                 $param = "l";
@@ -379,14 +379,15 @@ class filter_recitactivity extends moodle_text_filter {
             }
 
 
-            $options['target'] = '_self';
+            $attributes['target'] = '_self';
             
             if(in_array("b", str_split($param))){
-                $options['target'] = '_blank';
+                $attributes['target'] = '_blank';
             }
 
             switch ($param) {
                 case "i":
+                case "b":
                 case "ib":
                     $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
