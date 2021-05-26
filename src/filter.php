@@ -387,7 +387,6 @@ class filter_recitactivity extends moodle_text_filter {
 
             switch ($param) {
                 case "i":
-                case "b":
                 case "ib":
                     $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
@@ -414,6 +413,7 @@ class filter_recitactivity extends moodle_text_filter {
                     }
                     break;
                 case "l":
+                case "b":
                 case "lb":
                     $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
