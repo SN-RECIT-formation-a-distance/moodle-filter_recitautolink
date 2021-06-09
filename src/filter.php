@@ -72,6 +72,7 @@ class filter_recitactivity extends moodle_text_filter {
      * @param object $context
      */
     public function setup($page, $context) {
+        global $CFG;
         $this->context = $context;
         $this->page = $page;
 
@@ -84,6 +85,8 @@ class filter_recitactivity extends moodle_text_filter {
         $this->modules = get_fast_modinfo($this->page->course);
         $this->sectionslist = $this->modules->get_section_info_all();
         $this->courseactivitieslist = array();
+        
+        $page->requires->js(new moodle_url($CFG->wwwroot .'/filter/recitactivity/filter.js'), true);
     }
 
     /**
@@ -119,11 +122,15 @@ class filter_recitactivity extends moodle_text_filter {
                 if (!isset($options['target'])) $options['target'] = DEFAULT_TARGET;
                 $anchor = sprintf("%s-%ld", strtolower(get_string('section')), $section->section);
 
-                if(($this->context instanceof context_course) && ($this->page->course->format == 'treetopics') && ($options['target'] != '_blank')){
+                if(($this->context instanceof context_course) && ($this->page->course->format == 'treetopics') && ($options['target'] != '_blank') && !isset($options['popup'])){
                     return sprintf("<a href='#' title='%s' class='%s' data-section='%s' onclick=\"M.recit.course.format.TreeTopics.instance.goToSection(event)\">%s</a>",  $sectionname.' - '.$name, $class, $anchor, $sectionname);
                 }
                 else{
-                    return sprintf("<a title='%s' class='%s' href='%s/course/view.php?id=%ld#%s' target='".$options['target']."'>%s</a>", $sectionname.' - '.$name, $class, $CFG->wwwroot, $this->page->course->id, $anchor, $sectionname);
+                    $href = $CFG->wwwroot."/course/view.php?id=".$this->page->course->id . '#' . $anchor;
+                    if (isset($options['popup'])){
+                        $href = 'javascript:recit.filter.autolink.popupIframe("'.$href.'");';
+                    }
+                    return sprintf("<a title='%s' class='%s' href='%s' target='".$options['target']."'>%s</a>", $sectionname.' - '.$name, $class, $href, $sectionname);
                 }
             }
         }
@@ -231,8 +238,11 @@ class filter_recitactivity extends moodle_text_filter {
                 $courseactivity->cmcompletion = "";
             }
             else{
-                $courseactivity->href_tag_begin = html_writer::start_tag('a', array('class' => 'autolink '.$class,
-                'title' => $title, 'href' => $cm->__get('url')));
+                $tagattr = array('class' => 'autolink '.$class, 'title' => $title, 'href' => $cm->__get('url'), 'target' => $options['target']);
+                if (isset($options['popup'])){
+                    $tagattr['href'] = 'javascript:recit.filter.autolink.popupIframe("'.$tagattr['href'].'");';
+                }
+                $courseactivity->href_tag_begin = html_writer::start_tag('a', $tagattr);
                 $courseactivity->href_tag_end = '</a>';
             }
             
@@ -285,6 +295,9 @@ class filter_recitactivity extends moodle_text_filter {
                 'class' => 'iconlarge activityicon', 'alt' => '', 'role' => 'presentation', 'aria-hidden' => 'true')) .
                 html_writer::tag('span', $title, array('class' => 'instancename'));
         if ($mod->__get('uservisible')) {
+            if (isset($options['popup'])){
+                $url = 'javascript:recit.filter.autolink.popupIframe("'.$url.'");';
+            }
             $output .= html_writer::link($url, $activitylink, array('class' => 'aalink '.$class, 'onclick' => $onclick, 'target' => $options['target'], 'title' => $title));
         } else {
             // We may be displaying this just in order to show information
@@ -341,6 +354,9 @@ class filter_recitactivity extends moodle_text_filter {
         $result = $text;
         foreach ($matches as $match) {
             $attributes = array();
+
+
+            $attributes['target'] = '_self';
             $items = explode($sep, $match);
 
             //Build options array
@@ -363,6 +379,18 @@ class filter_recitactivity extends moodle_text_filter {
                     $attributes['title'] = $str[1];
                     unset($items[$i]);
                 }
+
+                // In case of /p popup
+                if ($param == 'p'){
+                    $attributes['popup'] = true;
+                    unset($items[$i]);
+                }
+                
+                // In case of /b link to new window
+                if($param == 'b'){
+                    $attributes['target'] = '_blank';
+                    unset($items[$i]);
+                }
             }
 
 
@@ -378,23 +406,14 @@ class filter_recitactivity extends moodle_text_filter {
                 $param = str_replace("[[", "", implode("", $items));
             }
 
-
-            $attributes['target'] = '_self';
-            
-            if(in_array("b", str_split($param))){
-                $attributes['target'] = '_blank';
-            }
-
             switch ($param) {
                 case "i":
-                case "ib":
                     $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
                         $result = str_replace($match, $activity->cmname, $result);
                     }
                     break;
                 case "c":
-                case "cb":
                     $this->load_cm_completions();
                     $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
@@ -403,9 +422,7 @@ class filter_recitactivity extends moodle_text_filter {
                     }
                     break;
                 case "ci":
-                case "cib":
                 case "ic":
-                case "icb":
                     $this->load_cm_completions();
                     $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
@@ -413,8 +430,6 @@ class filter_recitactivity extends moodle_text_filter {
                     }
                     break;
                 case "l":
-                case "b":
-                case "lb":
                     $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
                         $title = $activity->currentname;
@@ -424,7 +439,6 @@ class filter_recitactivity extends moodle_text_filter {
                     }
                     break;
                 case "s":
-                case "sb":
                     $link = $this->get_section($complement, $attributes);
                     if ($link != null) {
                         $result = str_replace($match, $link, $result);
