@@ -24,29 +24,53 @@ recit.filter = recit.filter || {};
 recit.filter.autolink = recit.filter.autolink || {};
 
 recit.filter.autolink.Popup = class {
-    constructor(content) {
-        this.popup = document.createElement('div');
-        this.popup.classList.add('autolink_popup-overlay');
-        this.popup.onclick = this.destroy.bind(this);
+    constructor(content) {        
+        let modal = document.createElement('div');
+        modal.classList.add('modal', 'fade', 'autolink_popup');
+        modal.setAttribute('tabindex', '-1');
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-hidden', 'true');
+        let inner2 = document.createElement('div');
+        inner2.classList.add('modal-dialog');
+        modal.appendChild(inner2);
         let inner = document.createElement('div');
-        inner.classList.add('autolink_popup');
-        inner.appendChild(content);
-        this.popup.appendChild(inner);
-        document.body.appendChild(this.popup);
-        document.body.style.overflow = "hidden";
-        document.body.style.height = "100%"; 
+        inner.classList.add('modal-content');
+        inner2.appendChild(inner);
+
+        let header = document.createElement('div');
+        header.classList.add('modal-header');
+        inner.appendChild(header);
+        let btn = document.createElement('button');
+        btn.classList.add('close');
+        btn.innerHTML = '<span aria-hidden="true">&times;</span>';
+        btn.setAttribute('data-dismiss', 'modal');
+        header.appendChild(btn);
+        
+        let body = document.createElement('div');
+        body.classList.add('modal-body');
+        inner.appendChild(body);
+        body.appendChild(content);
+        
+        document.body.appendChild(modal);
+        this.popup = modal;
+        $(modal).modal({show: true});
+        let that = this;
+        $(modal).on('hidden.bs.modal', function (e) {
+            that.destroy()
+        })
       }
       destroy(){
           this.popup.remove();
-          document.body.style.overflow = "auto";
-          document.body.style.height = "auto"; 
+      }
+      update(){
+        $(this.popup).modal('handleUpdate');
       }
 }
 
 recit.filter.autolink.popupIframe = function(url){
     let content = document.createElement('iframe');
     content.src = url;
-    new recit.filter.autolink.Popup(content);
+    let popup = new recit.filter.autolink.Popup(content);
     content.onload = () => {
         if (content.contentWindow.document.querySelector('#page-wrapper')){
             content.contentWindow.document.querySelector('#page-wrapper').style.marginTop = '0'; //remove margin from page wrapper
@@ -56,5 +80,6 @@ recit.filter.autolink.popupIframe = function(url){
             content.contentWindow.document.querySelector('#top-footer1').style.display = 'none'; //remove footer
         }
         content.style.height = content.contentWindow.document.documentElement.scrollHeight + 'px'; //adjust iframe to page height
+        popup.update();
     }
 }
