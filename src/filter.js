@@ -27,9 +27,6 @@ recit.filter.autolink.Popup = class {
     constructor(content) {        
         let modal = document.createElement('div');
         modal.classList.add('modal', 'fade', 'autolink_popup');
-        modal.setAttribute('tabindex', '-1');
-        modal.setAttribute('role', 'dialog');
-        modal.setAttribute('aria-hidden', 'true');
         let inner2 = document.createElement('div');
         inner2.classList.add('modal-dialog');
         modal.appendChild(inner2);
@@ -53,8 +50,9 @@ recit.filter.autolink.Popup = class {
         
         document.body.appendChild(modal);
         this.popup = modal;
-        $(modal).modal({show: true});
+        $(modal).modal({show: true, backdrop: true});
         let that = this;
+        $(".modal-backdrop").click(() => $(this.popup).modal('hide'));
         $(modal).on('hidden.bs.modal', function (e) {
             that.destroy()
         })
