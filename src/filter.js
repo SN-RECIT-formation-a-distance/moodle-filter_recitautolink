@@ -31,26 +31,30 @@ recit.filter.autolink.Popup = class {
         let inner = document.createElement('div');
         inner.classList.add('autolink_popup');
         inner.appendChild(content);
-        this.popup.appendChild(inner)
-        document.body.appendChild(this.popup)
-        content.onload = () => {
-            if (content.contentWindow.document.querySelector('#page-wrapper')){
-                content.contentWindow.document.querySelector('#page-wrapper').style.marginTop = '0'; //remove margin from page wrapper
-                content.contentWindow.document.querySelector('nav').style.display = 'none'; //remove navbar
-                content.contentWindow.document.querySelector('header').style.display = 'none'; //remove course header
-                if (content.contentWindow.document.querySelector('#sidepreopen-control')) content.contentWindow.document.querySelector('#sidepreopen-control').style.display = 'none'; //remove sidebar icon drawer
-                content.contentWindow.document.querySelector('#top-footer1').style.display = 'none'; //remove footer
-            }
-            content.style.height = content.contentWindow.document.documentElement.scrollHeight + 'px'; //adjust iframe to page height
-        }
+        this.popup.appendChild(inner);
+        document.body.appendChild(this.popup);
+        document.body.style.overflow = "hidden";
+        document.body.style.height = "100%"; 
       }
       destroy(){
           this.popup.remove();
+          document.body.style.overflow = "auto";
+          document.body.style.height = "auto"; 
       }
 }
 
 recit.filter.autolink.popupIframe = function(url){
-    let iframe = document.createElement('iframe');
-    iframe.src = url;
-    new recit.filter.autolink.Popup(iframe);
+    let content = document.createElement('iframe');
+    content.src = url;
+    new recit.filter.autolink.Popup(content);
+    content.onload = () => {
+        if (content.contentWindow.document.querySelector('#page-wrapper')){
+            content.contentWindow.document.querySelector('#page-wrapper').style.marginTop = '0'; //remove margin from page wrapper
+            content.contentWindow.document.querySelector('nav').style.display = 'none'; //remove navbar
+            content.contentWindow.document.querySelector('header').style.display = 'none'; //remove course header
+            if (content.contentWindow.document.querySelector('#sidepreopen-control')) content.contentWindow.document.querySelector('#sidepreopen-control').style.display = 'none'; //remove sidebar icon drawer
+            content.contentWindow.document.querySelector('#top-footer1').style.display = 'none'; //remove footer
+        }
+        content.style.height = content.contentWindow.document.documentElement.scrollHeight + 'px'; //adjust iframe to page height
+    }
 }

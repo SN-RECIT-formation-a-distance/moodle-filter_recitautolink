@@ -490,16 +490,35 @@ class filter_recitactivity extends moodle_text_filter {
     }
 
     public function getH5PFromName($name){
-        $list = \repository_contentbank\contentbank_search::get_search_contents($name);
+        global $PAGE;
+        // Return all content bank content that matches the search criteria and can be viewed/accessed by the user.
+        $coursecontext = \context_course::instance($PAGE->course->id);
+        $list = $this->get_h5p_search_contents($name, $coursecontext->id);
         if (!isset($list[0])) return;
         $h5p = $list[0];
         $source = json_decode(base64_decode($h5p['source']));
         autoloader::register();
 
-
         $url  = \moodle_url::make_pluginfile_url($source->contextid, 'contentbank', 'public', $source->itemid.'/'. $source->filename, null, null );
         $url = $url->out();
         return "<div class='h5p-placeholder' contenteditable='false'>$url</div>";
+    }
+
+    public function get_h5p_search_contents($search, $contextid) {
+        $contentbank = new \core_contentbank\contentbank();
+        // Return all content bank content that matches the search criteria and can be viewed/accessed by the user.
+        $contents = $contentbank->search_contents($search, $contextid);
+        return array_reduce($contents, function($list, $content) {
+            $contentcontext = \context::instance_by_id($content->get_content()->contextid);
+            $browser = \repository_contentbank\helper::get_contentbank_browser($contentcontext);
+            // If the user can access the content and content node can be created, add the node into the
+            // search results list.
+            if ($browser->can_access_content() &&
+                    $contentnode = \repository_contentbank\helper::create_contentbank_content_node($content)) {
+                $list[] = $contentnode;
+            }
+            return $list;
+        }, []);
     }
 
     public function course_section_cm_completion(cm_info $mod, $completiondata) {
