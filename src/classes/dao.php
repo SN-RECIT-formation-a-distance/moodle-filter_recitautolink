@@ -24,48 +24,66 @@ abstract class dao_filter_recitautolink implements i_filter_recitautolink_dao{
      * @param int $courseid
      */
     public function load_course_teachers($courseid, $group = false){
-        global $CFG, $USER;
+        global $CFG, $USER, $DB;
 
-        $prefix = $CFG->prefix;
-        $where = "where t3.courseid = $courseid";
+        $where = "where t3.courseid = :courseid";
         
         $query = "select t1.id as id, t1.firstname, t1.lastname, t1.email, t5.shortname as role, concat(t1.firstname, ' ', t1.lastname) as imagealt,
         t1.picture, t1.firstnamephonetic, t1.lastnamephonetic, t1.middlename, t1.alternatename   
-        from {$prefix}user as t1  
-        inner join {$prefix}user_enrolments as t2 on t1.id = t2.userid
-        inner join {$prefix}enrol as t3 on t2.enrolid = t3.id
-        inner join {$prefix}role_assignments as t4 on t1.id = t4.userid and t4.contextid in (select id from {$prefix}context where instanceid = $courseid)
-        inner join {$prefix}role as t5 on t4.roleid = t5.id and t5.shortname in ('teacher', 'editingteacher', 'noneditingteacher') ";
+        from {user} as t1  
+        inner join {user_enrolments} as t2 on t1.id = t2.userid
+        inner join {enrol} as t3 on t2.enrolid = t3.id
+        inner join {role_assignments} as t4 on t1.id = t4.userid and t4.contextid in (select id from {context} where instanceid = :courseid2)
+        inner join {role} as t5 on t4.roleid = t5.id and t5.shortname in ('teacher', 'editingteacher', 'noneditingteacher') ";
         if ($group){
-            $query .= "inner join {$prefix}groups_members as t6 on t6.userid = t1.id ";
-            $where .= " and t6.groupid IN (select groupid from {$prefix}groups_members where userid=$USER->id)";
+            $query .= "inner join {groups_members} as t6 on t6.userid = t1.id ";
+            $where .= " and t6.groupid IN (select groupid from {groups_members} where userid=:userid)";
         }
 
         $query .= "$where ORDER BY CONCAT(t1.firstname, t1.lastname) ASC";
         
-        $rst = $this->exec_query($query);
+        $rst = $DB->get_records_sql($query, array('courseid' => $courseid, 'courseid2' => $courseid, 'userid' => $USER->id));
 
         $result = array();
-		while($obj = $this->fetch_object($rst)){
+		foreach($rst as $obj){
             $result[] = $obj;
         }
+
+        /*$result = array();
+        foreach(array('teacher', 'editingteacher', 'noneditingteacher') as $r){
+            $role = $DB->get_record('role', array('shortname' => $r));
+            if ($role){
+                $context = get_context_instance(CONTEXT_COURSE, $courseid);
+                $teachers = get_role_users($role->id, $context);
+                foreach($teachers as $t){
+                    if (!$group){
+                        $result[] = $t;
+                    }else{
+                        $groupd = $DB->get_record('groups_members', array('userid' => $t->id));
+                        $user_group = $DB->get_record('groups_members', array('userid' => $USER->id));
+                        if ($groupd && $user_group && $groupd->groupid == $user_group->groupid){
+                            $result[] = $t;
+                        }
+                    }
+                }
+            }
+        }*/
+        
 
         return $result;
     }
 
     public function load_cm_completions($courseid){
-        global $USER, $CFG;
+        global $USER, $DB;
 
-        $prefix = $CFG->prefix;
+        $query = "SELECT cmc.* FROM {course_modules} as cm
+        INNER JOIN {course_modules_completion} cmc ON cmc.coursemoduleid=cm.id 
+        WHERE cm.course = ? AND cmc.userid = ?";
 
-        $query = "SELECT cmc.* FROM {$prefix}course_modules as cm
-        INNER JOIN {$prefix}course_modules_completion cmc ON cmc.coursemoduleid=cm.id 
-        WHERE cm.course={$courseid} AND cmc.userid=$USER->id";
-
-        $rst = $this->exec_query($query);
+        $rst = $DB->get_records_sql($query, [$courseid, $USER->id]);
 
         $result = array();
-        while($obj = $this->fetch_object($rst)){
+        foreach($rst as $obj){
             $result[$obj->coursemoduleid] = $obj;
         }
 
