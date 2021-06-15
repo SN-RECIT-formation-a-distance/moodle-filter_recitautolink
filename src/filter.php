@@ -509,12 +509,7 @@ class filter_recitactivity extends moodle_text_filter {
         // Return all content bank content that matches the search criteria and can be viewed/accessed by the user.
         $contents = $contentbank->search_contents($search, $contextid);
         return array_reduce($contents, function($list, $content) {
-            $contentcontext = \context::instance_by_id($content->get_content()->contextid);
-            $browser = \repository_contentbank\helper::get_contentbank_browser($contentcontext);
-            // If the user can access the content and content node can be created, add the node into the
-            // search results list.
-            if ($browser->can_access_content() &&
-                    $contentnode = \repository_contentbank\helper::create_contentbank_content_node($content)) {
+            if ($contentnode = \repository_contentbank\helper::create_contentbank_content_node($content)) {
                 $list[] = $contentnode;
             }
             return $list;
