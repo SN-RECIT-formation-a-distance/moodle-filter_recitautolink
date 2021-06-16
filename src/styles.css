@@ -18,3 +18,17 @@
     height: 80vh;
     border: 0; 
 }
+
+/* Popup fix for iOS */
+
+@supports (-webkit-overflow-scrolling: touch) {
+    
+    html {
+        -webkit-overflow-scrolling: touch;
+        overflow: auto;
+    }
+
+   body.modal-open { /* Popup background wont move */
+        position: fixed;
+    }
+}
