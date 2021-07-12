@@ -4,7 +4,7 @@
  
 This filter allows, among other things, the display of the activity icon as well as a check mark indicating the status of a completed activity. It also allows you to take advantage of Moodle's database and create a more personalized experience. The examples below show you the available integration codes and the result on the user's screen.
  
-# Utilisation / Use
+# Comment utiliser ce plug-in / How to use this 
 Ceci repésente le caractère séparateur à utiliser dans le filtre. Si le caractère est <b>/</b>, la syntaxe sera la suivante <b>[[i/Nom de l'activité]]</b>. Tous les indicateurs ( i/, c/, d/, b/, s/ ) doivent être placés au début du double crochets ouverts [[.<br/>
 <h4>Code d'intégration</h4>
 <ul>
@@ -41,5 +41,8 @@ Represents the separator character used in the filter. If the character is <b>/<
 
  # Plus d'information / More informations
  
-  https://recitfad.ca/moodledocs/
-    
+<ul>
+	<li>https://recitfad.ca/moodledocs/ (only in Canada)</li>	
+	<li>https://www.youtube.com/watch?v=FkpwLCFOUTU</li>
+</ul>
+   
