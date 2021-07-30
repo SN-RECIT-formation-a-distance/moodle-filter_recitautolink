@@ -74,9 +74,11 @@ recit.filter.autolink.popupIframe = function(url){
             content.contentWindow.document.querySelector('#page-wrapper').style.marginTop = '0'; //remove margin from page wrapper
             content.contentWindow.document.querySelector('nav').style.display = 'none'; //remove navbar
             content.contentWindow.document.querySelector('header').style.display = 'none'; //remove course header
+            content.contentWindow.document.querySelector('.activity-nav').style.display = 'none'; //remove footer
             if (content.contentWindow.document.querySelector('#sidepreopen-control')) content.contentWindow.document.querySelector('#sidepreopen-control').style.display = 'none'; //remove sidebar icon drawer
             if (content.contentWindow.document.querySelector('#nav-drawer')) content.contentWindow.document.querySelector('#nav-drawer').style.display = 'none'; //remove sidebar icon drawer
-            if (content.contentWindow.document.querySelector('footer')) content.contentWindow.document.querySelector('footer').style.display = 'none'; //remove footer
+            if (content.contentWindow.document.querySelector('#top-footer1')) content.contentWindow.document.querySelector('#top-footer1').style.display = 'none'; //remove footer
+            if (content.contentWindow.document.querySelector('activity-nav')) content.contentWindow.document.querySelector('activity-nav').style.display = 'none'; //remove footer
         }
         //content.style.height = content.contentWindow.document.documentElement.scrollHeight + 'px'; //adjust iframe to page height
         popup.update();
