@@ -75,6 +75,7 @@ recit.filter.autolink.popupIframe = function(url){
             content.contentWindow.document.querySelector('nav').style.display = 'none'; //remove navbar
             content.contentWindow.document.querySelector('header').style.display = 'none'; //remove course header
             content.contentWindow.document.querySelector('.activity-nav').style.display = 'none'; //remove footer
+            content.contentWindow.document.querySelector('.activity-title-container').style.display = 'none'; //remove title
             if (content.contentWindow.document.querySelector('#sidepreopen-control')) content.contentWindow.document.querySelector('#sidepreopen-control').style.display = 'none'; //remove sidebar icon drawer
             if (content.contentWindow.document.querySelector('#nav-drawer')) content.contentWindow.document.querySelector('#nav-drawer').style.display = 'none'; //remove sidebar icon drawer
             if (content.contentWindow.document.querySelector('#top-footer1')) content.contentWindow.document.querySelector('#top-footer1').style.display = 'none'; //remove footer
