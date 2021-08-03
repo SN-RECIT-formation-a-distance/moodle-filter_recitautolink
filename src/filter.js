@@ -69,17 +69,22 @@ recit.filter.autolink.popupIframe = function(url){
     let content = document.createElement('iframe');
     content.src = url;
     let popup = new recit.filter.autolink.Popup(content);
+    let selectors_to_hide = [
+        'nav', //navbar
+        'header', //Course header
+        '.activity-nav', //activity nav
+        '.activity-title-container', //activity title
+        '#sidepreopen-control', //sidebar drawer
+        '#nav-drawer', //drawer
+        '#top-footer1', //footer
+    ]
     content.onload = () => {
         if (content.contentWindow.document.querySelector('#page-wrapper')){
             content.contentWindow.document.querySelector('#page-wrapper').style.marginTop = '0'; //remove margin from page wrapper
-            content.contentWindow.document.querySelector('nav').style.display = 'none'; //remove navbar
-            content.contentWindow.document.querySelector('header').style.display = 'none'; //remove course header
-            content.contentWindow.document.querySelector('.activity-nav').style.display = 'none'; //remove footer
-            content.contentWindow.document.querySelector('.activity-title-container').style.display = 'none'; //remove title
-            if (content.contentWindow.document.querySelector('#sidepreopen-control')) content.contentWindow.document.querySelector('#sidepreopen-control').style.display = 'none'; //remove sidebar icon drawer
-            if (content.contentWindow.document.querySelector('#nav-drawer')) content.contentWindow.document.querySelector('#nav-drawer').style.display = 'none'; //remove sidebar icon drawer
-            if (content.contentWindow.document.querySelector('#top-footer1')) content.contentWindow.document.querySelector('#top-footer1').style.display = 'none'; //remove footer
-            if (content.contentWindow.document.querySelector('activity-nav')) content.contentWindow.document.querySelector('activity-nav').style.display = 'none'; //remove footer
+            for (let i = 0; i < selectors_to_hide.length; i++){
+                if (content.contentWindow.document.querySelector(selectors_to_hide[i])) 
+                    content.contentWindow.document.querySelector(selectors_to_hide[i]).style.display = 'none';
+            }
         }
         //content.style.height = content.contentWindow.document.documentElement.scrollHeight + 'px'; //adjust iframe to page height
         popup.update();
