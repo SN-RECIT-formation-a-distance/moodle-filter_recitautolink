@@ -114,7 +114,7 @@ class filter_recitactivity extends moodle_text_filter {
         foreach ($this->sectionslist as $section) {
             $sectionname = (empty($section->name) ? strval($section->section) : $section->name);
 
-            if($sectionname == $name || $section->section == $name){
+            if($sectionname == $name || get_string('section') . strval($section->section) == $name){// Used for atto plugin, if no name, sectionX
                 $sectionname = (empty($section->name) ?  get_string('section') . ' ' . strval($section->section) : $section->name);
                 if (isset($options['title'])) $sectionname = $options['title'];
                 $class = '';
