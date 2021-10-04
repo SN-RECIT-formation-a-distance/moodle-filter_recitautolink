@@ -106,32 +106,50 @@ class filter_recitactivity extends moodle_text_filter {
                 $this->isTeacher = true;
             } 
         }
-    }
+    } 
 
     protected function get_section($name, $options = array()){
         global $CFG;
 
         foreach ($this->sectionslist as $section) {
-            $sectionname = (empty($section->name) ? strval($section->section) : $section->name);
+            $sectionname = (empty($section->name) ? strval($section->section) : $section->name);            
 
             if($sectionname == $name || get_string('section') . strval($section->section) == $name){// Used for atto plugin, if no name, sectionX
+
                 $sectionname = (empty($section->name) ?  get_string('section') . ' ' . strval($section->section) : $section->name);
                 if (isset($options['title'])) $sectionname = $options['title'];
                 $class = '';
                 if (isset($options['class'])) $class = $options['class'];
                 if (!isset($options['target'])) $options['target'] = DEFAULT_TARGET;
                 $anchor = sprintf("%s-%ld", strtolower(get_string('section')), $section->section);
+                
+                $isrestricted = (!$this->isTeacher) && !is_null($section->availability);
 
+                $availableInfo = "";
+                if($isrestricted){
+                    $ci = new \core_availability\info_section($section);                    
+                    $infoMsg = htmlspecialchars($ci->get_full_information());
+                    $isrestricted = (strlen($infoMsg) > 0);
+                    if($isrestricted){
+                        $availableInfo = sprintf("<button type='button' class='btn btn-sm btn-link' data-html='true' title='%s' data-container='body' data-toggle='popover' data-placement='bottom' data-content=\"%s\">", get_string('restricted'), $infoMsg);
+                        $availableInfo .= "<i class='fa fa-info-circle'></i>";
+                        $availableInfo .= "</button>";
+                        $class .= " disabled";
+                    }
+                }
+                
                 if(($this->context instanceof context_course) && ($this->page->course->format == 'treetopics') && ($options['target'] != '_blank') && !isset($options['popup'])){
-                    return sprintf("<a href='#' title='%s' class='%s' data-section='%s' onclick=\"M.recit.course.format.TreeTopics.instance.goToSection(event)\">%s</a>",  $sectionname.' - '.$name, $class, $anchor, $sectionname);
+                    $result = sprintf("<a href='#' title='%s' class='%s' data-section='%s' onclick=\"M.recit.course.format.TreeTopics.instance.goToSection(event)\">%s</a>",  $sectionname.' - '.$name, $class, $anchor, $sectionname);
                 }
                 else{
                     $href = $CFG->wwwroot."/course/view.php?id=".$this->page->course->id . '#' . $anchor;
                     if (isset($options['popup'])){
                         $href = 'javascript:recit.filter.autolink.popupIframe("'.$href.'");';
                     }
-                    return sprintf("<a title='%s' class='%s' href='%s' target='".$options['target']."'>%s</a>", $sectionname.' - '.$name, $class, $href, $sectionname);
+                    $result = sprintf("<a title='%s' class='%s' href='%s' target='".$options['target']."'>%s</a>", $sectionname.' - '.$name, $class, $href, $sectionname);
                 }
+
+                return "<span>$result$availableInfo</span>";
             }
         }
 
@@ -216,7 +234,7 @@ class filter_recitactivity extends moodle_text_filter {
             $courseactivity->uservisible = $cm->uservisible;
 
             if($isrestricted){
-                $courseactivity->href_tag_begin = html_writer::start_tag('a', array('class' => 'disabled ',
+                $courseactivity->href_tag_begin = html_writer::start_tag('a', array('class' => "$class disabled ",
                     'title' => $title, 'href' => '#'));
                 $courseactivity->href_tag_end = '</a>';
 
