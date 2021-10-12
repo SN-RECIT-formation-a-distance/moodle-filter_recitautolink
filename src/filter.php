@@ -127,8 +127,16 @@ class filter_recitactivity extends moodle_text_filter {
 
                 $availableInfo = "";
                 if($isrestricted){
-                    $ci = new \core_availability\info_section($section);                    
-                    $infoMsg = htmlspecialchars($ci->get_full_information());
+                    $ci = new \core_availability\info_section($section);
+
+                    $infoMsg = $ci->get_full_information();
+
+                    if($infoMsg instanceof core_availability_multiple_messages){
+                        $infoMsg = implode("; ", $infoMsg->items);
+                    }
+
+                    $infoMsg = htmlspecialchars($infoMsg);
+                    
                     $isrestricted = (strlen($infoMsg) > 0);
                     if($isrestricted){
                         $availableInfo = sprintf("<button type='button' class='btn btn-sm btn-link' data-html='true' title='%s' data-container='body' data-toggle='popover' data-placement='bottom' data-content=\"%s\">", get_string('restricted'), $infoMsg);
