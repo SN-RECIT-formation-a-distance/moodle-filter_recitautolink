@@ -87,6 +87,8 @@ class filter_recitactivity extends moodle_text_filter {
         $this->courseactivitieslist = array();
         
         $page->requires->js(new moodle_url($CFG->wwwroot .'/filter/recitactivity/filter.js'), true);
+
+        $this->load_course_teachers($this->page->course->id);
     }
 
     /**
@@ -109,7 +111,7 @@ class filter_recitactivity extends moodle_text_filter {
     } 
 
     protected function get_section($name, $options = array()){
-        global $CFG;
+        global $CFG, $PAGE, $COURSE;
 
         foreach ($this->sectionslist as $section) {
             $sectionname = (empty($section->name) ? strval($section->section) : $section->name);            
@@ -123,27 +125,19 @@ class filter_recitactivity extends moodle_text_filter {
                 if (!isset($options['target'])) $options['target'] = DEFAULT_TARGET;
                 $anchor = sprintf("%s-%ld", strtolower(get_string('section')), $section->section);
                 
-                $isrestricted = (!$this->isTeacher) && !is_null($section->availability);
+                $isrestricted = (!$this->isTeacher) && !is_null($section->availability) && !$section->available;
 
                 $availableInfo = "";
                 if($isrestricted){
-                    $ci = new \core_availability\info_section($section);
-
-                    $infoMsg = $ci->get_full_information();
-
-                    if($infoMsg instanceof core_availability_multiple_messages){
-                        $infoMsg = implode("; ", $infoMsg->items);
-                    }
-
+                    $courseFormat = course_get_format($COURSE);
+                    $renderer = $courseFormat->get_renderer($PAGE);
+                    $infoMsg = $renderer->section_availability($section);
                     $infoMsg = htmlspecialchars($infoMsg);
                     
-                    $isrestricted = (strlen($infoMsg) > 0);
-                    if($isrestricted){
-                        $availableInfo = sprintf("<button type='button' class='btn btn-sm btn-link' data-html='true' title='%s' data-container='body' data-toggle='popover' data-placement='bottom' data-content=\"%s\">", get_string('restricted'), $infoMsg);
-                        $availableInfo .= "<i class='fa fa-info-circle'></i>";
-                        $availableInfo .= "</button>";
-                        $class .= " disabled";
-                    }
+                    $availableInfo = sprintf("<button type='button' class='btn btn-sm btn-link' data-html='true' title='%s' data-container='body' data-toggle='popover' data-placement='bottom' data-content=\"%s\">", get_string('restricted'), $infoMsg);
+                    $availableInfo .= "<i class='fa fa-info-circle'></i>";
+                    $availableInfo .= "</button>";
+                    $class .= " disabled";
                 }
                 
                 if(($this->context instanceof context_course) && ($this->page->course->format == 'treetopics') && ($options['target'] != '_blank') && !isset($options['popup'])){
@@ -185,7 +179,6 @@ class filter_recitactivity extends moodle_text_filter {
             return null;
         }
         $avoidModules = array("label");
-        $this->load_course_teachers($this->page->course->id);
 
         foreach ($this->modules->cms as $cm) {
             if(in_array($cm->__get('modname'), $avoidModules)){
