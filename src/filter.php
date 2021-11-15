@@ -429,9 +429,9 @@ class filter_recitactivity extends moodle_text_filter {
                 case "i":
                     $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
-                        $title = $activity->cmname;
+                        $title = $activity->currentname;
                         if (isset($attributes['title'])) $title = $attributes['title'];
-                        $result = str_replace($match, $title, $result);
+                        $result = str_replace($match, $activity->href_tag_begin. $title. $activity->href_tag_end, $result);
                     }
                     break;
                 case "c":
@@ -449,9 +449,9 @@ class filter_recitactivity extends moodle_text_filter {
                     $this->load_cm_completions();
                     $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
-                        $title = $activity->cmname;
+                        $title = $activity->currentname;
                         if (isset($attributes['title'])) $title = $attributes['title'];
-                        $result = str_replace($match, sprintf("%s %s", $activity->cmcompletion, $title), $result);
+                        $result = str_replace($match, sprintf("%s %s", $activity->cmcompletion, $activity->href_tag_begin. $title. $activity->href_tag_end), $result);
                     }
                     break;
                 case "l":
