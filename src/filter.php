@@ -171,8 +171,8 @@ class filter_recitactivity extends moodle_text_filter {
         global $USER;
         
         // return le cache
-        if(isset($this->courseactivitieslist[$param.$activityname])){
-            return $this->courseactivitieslist[$param.$activityname];
+        if(isset($this->courseactivitieslist[$param.$activityname.json_encode($options)])){
+            return $this->courseactivitieslist[$param.$activityname.json_encode($options)];
         }
 
         if (empty($this->modules->cms)) {
@@ -199,14 +199,12 @@ class filter_recitactivity extends moodle_text_filter {
             if (isset($options['title'])) $title = $options['title'];
             $class = '';
             if (isset($options['class'])) $class = $options['class'];
-            if (!isset($options['target'])) $options['target'] = DEFAULT_TARGET;
             $currentname = trim($cm->__get('name'));
 
             // Avoid empty or unlinkable activity names.
             if (empty($name) || ($cm->deletioninprogress == 1)) {
                 continue;
             }
-
             $cmname = $this->get_cm_name($cm, $options);
 
             // Row not present counts as 'not complete'
@@ -267,9 +265,9 @@ class filter_recitactivity extends moodle_text_filter {
             
 
             // keep in cache
-            $this->courseactivitieslist[$param.$activityname] = $courseactivity;
+            $this->courseactivitieslist[$param.$activityname.json_encode($options)] = $courseactivity;
 
-            return $this->courseactivitieslist[$param.$activityname];
+            return $this->courseactivitieslist[$param.$activityname.json_encode($options)];
         }
 
         return null;
@@ -373,7 +371,7 @@ class filter_recitactivity extends moodle_text_filter {
             $attributes = array();
 
 
-            $attributes['target'] = '_self';
+            $attributes['target'] = DEFAULT_TARGET;
             $items = explode($sep, $match);
 
             //Build options array
@@ -427,7 +425,8 @@ class filter_recitactivity extends moodle_text_filter {
                 case "i":
                     $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
-                        $result = str_replace($match, $activity->cmname, $result);
+                        $url = $activity->cmname;
+                        $result = str_replace($match, $url, $result);
                     }
                     break;
                 case "c":
