@@ -289,7 +289,7 @@ class filter_recitactivity extends moodle_text_filter {
         $altname = $mod->__get('modfullname');
         
         $title = $instancename;
-        if (isset($options['title'])) $title = $options['title'].' - '.$instancename;
+        if (isset($options['title'])) $title = $options['title'];
         $class = '';
         if (isset($options['class'])) $class = $options['class'];
         if (!isset($options['target'])) $options['target'] = DEFAULT_TARGET; 
@@ -310,9 +310,7 @@ class filter_recitactivity extends moodle_text_filter {
         $onclick = htmlspecialchars_decode($mod->__get('onclick'), ENT_QUOTES);
 
         // Display link itself.
-        $activitylink = html_writer::empty_tag('img', array('src' => $mod->get_icon_url(),
-                'class' => 'iconlarge activityicon', 'alt' => '', 'role' => 'presentation', 'aria-hidden' => 'true')) .
-                html_writer::tag('span', $title, array('class' => 'instancename'));
+        $activitylink = html_writer::empty_tag('img', array('src' => $mod->get_icon_url(), 'class' => 'iconlarge activityicon', 'alt' => '', 'role' => 'presentation', 'aria-hidden' => 'true')) . html_writer::tag('span', $title, array('class' => 'instancename'));
         if ($mod->__get('uservisible')) {
             if (isset($options['popup'])){
                 $url = 'javascript:recit.filter.autolink.popupIframe("'.$url.'");';
@@ -449,9 +447,7 @@ class filter_recitactivity extends moodle_text_filter {
                     $this->load_cm_completions();
                     $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
-                        $title = $activity->currentname;
-                        if (isset($attributes['title'])) $title = $attributes['title'];
-                        $result = str_replace($match, sprintf("%s %s", $activity->cmcompletion, $activity->href_tag_begin. $title. $activity->href_tag_end), $result);
+                        $result = str_replace($match, sprintf("%s %s", $activity->cmcompletion, $activity->cmname), $result);
                     }
                     break;
                 case "l":
