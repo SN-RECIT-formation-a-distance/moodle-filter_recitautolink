@@ -427,9 +427,7 @@ class filter_recitactivity extends moodle_text_filter {
                 case "i":
                     $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
-                        $title = $activity->currentname;
-                        if (isset($attributes['title'])) $title = $attributes['title'];
-                        $result = str_replace($match, $activity->href_tag_begin. $title. $activity->href_tag_end, $result);
+                        $result = str_replace($match, $activity->cmname, $result);
                     }
                     break;
                 case "c":
