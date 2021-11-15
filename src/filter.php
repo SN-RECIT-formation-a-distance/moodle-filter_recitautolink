@@ -429,15 +429,19 @@ class filter_recitactivity extends moodle_text_filter {
                 case "i":
                     $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
-                        $result = str_replace($match, $activity->cmname, $result);
+                        $title = $activity->cmname;
+                        if (isset($attributes['title'])) $title = $attributes['title'];
+                        $result = str_replace($match, $title, $result);
                     }
                     break;
                 case "c":
                     $this->load_cm_completions();
                     $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
+                        $title = $activity->currentname;
+                        if (isset($attributes['title'])) $title = $attributes['title'];
                         $result = str_replace($match, sprintf("%s %s %s %s", $activity->cmcompletion,
-                                $activity->href_tag_begin, $activity->currentname, $activity->href_tag_end), $result);
+                                $activity->href_tag_begin, $title, $activity->href_tag_end), $result);
                     }
                     break;
                 case "ci":
@@ -445,7 +449,9 @@ class filter_recitactivity extends moodle_text_filter {
                     $this->load_cm_completions();
                     $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
-                        $result = str_replace($match, sprintf("%s %s", $activity->cmcompletion, $activity->cmname), $result);
+                        $title = $activity->cmname;
+                        if (isset($attributes['title'])) $title = $attributes['title'];
+                        $result = str_replace($match, sprintf("%s %s", $activity->cmcompletion, $title), $result);
                     }
                     break;
                 case "l":
