@@ -73,14 +73,17 @@ recit.filter.autolink.popupIframe = function(url){
         'nav', //navbar
         'header', //Course header
         '.activity-nav', //activity nav
+        '.activity-navigation', //activity nav
         '.activity-title-container', //activity title
         '#sidepreopen-control', //sidebar drawer
         '#nav-drawer', //drawer
         '#top-footer1', //footer
+        '#page-footer', //footer
     ]
     content.onload = () => {
         if (content.contentWindow.document.querySelector('#page-wrapper')){
             content.contentWindow.document.querySelector('#page-wrapper').style.marginTop = '0'; //remove margin from page wrapper
+            content.contentWindow.document.body.classList.remove('drawer-open-left'); //This class adds margin left on Boost
             for (let i = 0; i < selectors_to_hide.length; i++){
                 if (content.contentWindow.document.querySelector(selectors_to_hide[i])) 
                     content.contentWindow.document.querySelector(selectors_to_hide[i]).style.display = 'none';
