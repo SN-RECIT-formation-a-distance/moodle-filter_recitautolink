@@ -1,10 +1,9 @@
 
 /* Popup */
-.autolink_popup, .autolink_popup .modal-dialog {
-    max-width: 93vw;
-    max-height: 90vh;
+.autolink_popup .modal-dialog {
     width: fit-content;
     width: -moz-fit-content;
+    max-width: none !important;
     margin: auto;
 }
 
