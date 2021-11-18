@@ -44,8 +44,6 @@ use core_h5p\local\library\autoloader;
  * @license    {@link http://www.gnu.org/licenses/gpl-3.0.html} GNU GPL v3 or later
  */
 class filter_recitactivity extends moodle_text_filter {
-    /** @var array course activities list */
-    protected $courseactivitieslist = array();
     /** @var array teachers list */
     protected $teacherslist = array();
     /** @var array */
@@ -84,7 +82,6 @@ class filter_recitactivity extends moodle_text_filter {
         $this->dao = dao_filter_recitautolink_factory::getInstance()->getDAO();
         $this->modules = get_fast_modinfo($this->page->course);
         $this->sectionslist = $this->modules->get_section_info_all();
-        $this->courseactivitieslist = array();
         
         $page->requires->js(new moodle_url($CFG->wwwroot .'/filter/recitactivity/filter.js'), true);
 
@@ -173,11 +170,6 @@ class filter_recitactivity extends moodle_text_filter {
      */
     protected function load_course_activities_list($activityname, $param = '', $options = array()) {
         global $USER;
-        
-        // return le cache
-        if(isset($this->courseactivitieslist[$param.$activityname.json_encode($options)])){
-            return $this->courseactivitieslist[$param.$activityname.json_encode($options)];
-        }
 
         if (empty($this->modules->cms)) {
             return null;
@@ -266,12 +258,8 @@ class filter_recitactivity extends moodle_text_filter {
                 $courseactivity->href_tag_begin = html_writer::start_tag('a', $tagattr);
                 $courseactivity->href_tag_end = '</a>';
             }
-            
 
-            // keep in cache
-            $this->courseactivitieslist[$param.$activityname.json_encode($options)] = $courseactivity;
-
-            return $this->courseactivitieslist[$param.$activityname.json_encode($options)];
+            return $courseactivity;
         }
 
         return null;
