@@ -29,6 +29,7 @@ recit.filter.autolink.Popup = class {
         modal.classList.add('modal', 'fade', 'autolink_popup');
         let inner2 = document.createElement('div');
         inner2.classList.add('modal-dialog');
+        inner2.classList.add('modal-dialog-centered');
         modal.appendChild(inner2);
         let inner = document.createElement('div');
         inner.classList.add('modal-content');
@@ -37,10 +38,12 @@ recit.filter.autolink.Popup = class {
         let header = document.createElement('div');
         header.classList.add('modal-header');
         inner.appendChild(header);
+        this.title = document.createElement('h3');
         let btn = document.createElement('button');
         btn.classList.add('close');
         btn.innerHTML = '<span aria-hidden="true">&times;</span>';
         btn.setAttribute('data-dismiss', 'modal');
+        header.appendChild(this.title);
         header.appendChild(btn);
         
         let body = document.createElement('div');
@@ -69,27 +72,8 @@ recit.filter.autolink.popupIframe = function(url){
     let content = document.createElement('iframe');
     content.src = url;
     let popup = new recit.filter.autolink.Popup(content);
-    let selectors_to_hide = [
-        'nav', //navbar
-        'header', //Course header
-        '.activity-nav', //activity nav
-        '.activity-navigation', //activity nav
-        '.activity-title-container', //activity title
-        '#sidepreopen-control', //sidebar drawer
-        '#nav-drawer', //drawer
-        '#top-footer1', //footer
-        '#page-footer', //footer
-    ]
     content.onload = () => {
-        if (content.contentWindow.document.querySelector('#page-wrapper')){
-            content.contentWindow.document.querySelector('#page-wrapper').style.marginTop = '0'; //remove margin from page wrapper
-            content.contentWindow.document.body.classList.remove('drawer-open-left'); //This class adds margin left on Boost
-            for (let i = 0; i < selectors_to_hide.length; i++){
-                if (content.contentWindow.document.querySelector(selectors_to_hide[i])) 
-                    content.contentWindow.document.querySelector(selectors_to_hide[i]).style.display = 'none';
-            }
-        }
-        //content.style.height = content.contentWindow.document.documentElement.scrollHeight + 'px'; //adjust iframe to page height
         popup.update();
+        popup.title.innerText = content.contentDocument.title;
     }
 }

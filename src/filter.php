@@ -89,6 +89,10 @@ class filter_recitactivity extends moodle_text_filter {
         $page->requires->js(new moodle_url($CFG->wwwroot .'/filter/recitactivity/filter.js'), true);
 
         $this->load_course_teachers($this->page->course->id);
+
+        if (isset($_GET['autolinkpopup'])){
+            $page->set_pagelayout('popup');
+        }
     }
 
     /**
@@ -144,11 +148,11 @@ class filter_recitactivity extends moodle_text_filter {
                     $result = sprintf("<a href='#' title='%s' class='%s' data-section='%s' onclick=\"M.recit.course.format.TreeTopics.instance.goToSection(event)\">%s</a>",  $sectionname.' - '.$name, $class, $anchor, $sectionname);
                 }
                 else{
-                    $href = $CFG->wwwroot."/course/view.php?id=".$this->page->course->id . '#' . $anchor;
+                    $href = $CFG->wwwroot."/course/view.php?id=".$this->page->course->id;
                     if (isset($options['popup'])){
-                        $href = 'javascript:recit.filter.autolink.popupIframe("'.$href.'");';
+                        $href = 'javascript:recit.filter.autolink.popupIframe("'.$href . '&autolinkpopup=1#' . $anchor.'");';
                     }
-                    $result = sprintf("<a title='%s' class='%s' href='%s' target='".$options['target']."'>%s</a>", $sectionname.' - '.$name, $class, $href, $sectionname);
+                    $result = sprintf("<a title='%s' class='%s' href='%s' target='".$options['target']."'>%s</a>", $sectionname.' - '.$name, $class, $href . '#' . $anchor, $sectionname);
                 }
 
                 return "<span>$result$availableInfo</span>";
@@ -257,7 +261,7 @@ class filter_recitactivity extends moodle_text_filter {
             else{
                 $tagattr = array('class' => 'autolink '.$class, 'title' => $title, 'href' => $cm->__get('url'), 'target' => $options['target']);
                 if (isset($options['popup'])){
-                    $tagattr['href'] = 'javascript:recit.filter.autolink.popupIframe("'.$tagattr['href'].'");';
+                    $tagattr['href'] = 'javascript:recit.filter.autolink.popupIframe("'.$tagattr['href'].'&autolinkpopup=1");';
                 }
                 $courseactivity->href_tag_begin = html_writer::start_tag('a', $tagattr);
                 $courseactivity->href_tag_end = '</a>';
@@ -311,7 +315,7 @@ class filter_recitactivity extends moodle_text_filter {
         $activitylink = html_writer::empty_tag('img', array('src' => $mod->get_icon_url(), 'class' => 'iconlarge activityicon', 'alt' => '', 'role' => 'presentation', 'aria-hidden' => 'true')) . html_writer::tag('span', $title, array('class' => 'instancename'));
         if ($mod->__get('uservisible')) {
             if (isset($options['popup'])){
-                $url = 'javascript:recit.filter.autolink.popupIframe("'.$url.'");';
+                $url = 'javascript:recit.filter.autolink.popupIframe("'.$url.'&autolinkpopup=1");';
             }
             $output .= html_writer::link($url, $activitylink, array('class' => 'aalink '.$class, 'onclick' => $onclick, 'target' => $options['target'], 'title' => $title));
         } else {
