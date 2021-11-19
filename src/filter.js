@@ -73,7 +73,11 @@ recit.filter.autolink.popupIframe = function(url){
     content.src = url;
     let popup = new recit.filter.autolink.Popup(content);
     content.onload = () => {
-        popup.update();
         popup.title.innerText = content.contentDocument.title;
+        if (!content.contentWindow.document.querySelector('iframe')){
+            content.contentWindow.document.querySelector('html').style.height = 'auto'; //adjust body height to content instead of 100%
+            content.style.height = content.contentWindow.document.documentElement.offsetHeight + 'px'; //adjust iframe to page height
+        }
+        popup.update();
     }
 }
