@@ -78,6 +78,17 @@ recit.filter.autolink.popupIframe = function(url){
             content.contentWindow.document.querySelector('html').style.height = 'auto'; //adjust body height to content instead of 100%
             content.style.height = content.contentWindow.document.documentElement.offsetHeight + 'px'; //adjust iframe to page height
         }
+        else{
+            // in case h5p (iframe within iframe within another iframe) that keep refreshing screen endless because of the scrollbar
+            let css = "::-webkit-scrollbar {width: 0; background: transparent;}";
+            let style = document.createElement("style");
+            // / Remove scrollbar space and  just make scrollbar invisible 
+            style.setAttribute('type', 'text/css'); 
+            style.appendChild(document.createTextNode(css));
+            content.contentWindow.document.head.appendChild(style);
+            console.log(style);
+        }
+
         popup.update();
     }
 }
