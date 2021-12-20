@@ -146,10 +146,7 @@ class filter_recitactivity extends moodle_text_filter {
                 }
                 else{
                     $href = $CFG->wwwroot."/course/view.php?id=".$this->page->course->id;
-                    if (isset($options['popup'])){
-                        $href = 'javascript:recit.filter.autolink.popupIframe("'.$href . '&autolinkpopup=1#' . $anchor.'");';
-                    }
-                    $result = sprintf("<a title='%s' class='%s' href='%s' target='".$options['target']."'>%s</a>", $sectionname.' - '.$name, $class, $href . '#' . $anchor, $sectionname);
+                    $result = sprintf("<a title='%s' class='%s' href='%s' target='".$options['target']."'>%s</a>", $sectionname.' - '.$name, $class, $href . "&section={$section->section}&t=".microtime()."#$anchor", $sectionname);
                 }
 
                 return "<span>$result$availableInfo</span>";
