@@ -25,8 +25,8 @@
  * @license    {@link http://www.gnu.org/licenses/gpl-3.0.html} GNU GPL v3 or later
  */
 
-$string['filtername'] = "Liens automatiques améliorés du RÉCIT";
-$string['privacy:metadata'] = 'Le plugin "Liens automatiques améliorés du RÉCIT" ne conserve aucune donnée.';
+$string['filtername'] = "Liens automatiques du RÉCIT";
+$string['privacy:metadata'] = 'Le plugin "Liens automatiques du RÉCIT" ne conserve aucune donnée.';
 $string['teacherbygroup'] = 'Afficher les professeurs par groupe seulement';
 $string['teacherbygroup_desc'] = 'Si ceci est à off, d/teacher va afficher tous les professeurs du cours.';
 $string['character'] = 'Caractère servant de séparateur';

@@ -11,9 +11,7 @@ class dao_filter_recitautolink{
 
         $where = "where t3.courseid = :courseid";
         
-        $DB->execute("set @uniqueId = 0");
-
-        $query = "select  @uniqueId := @uniqueId + 1 as uniqueId, t1.id as id, t1.firstname, t1.lastname, t1.email, t5.shortname as role, concat(t1.firstname, ' ', t1.lastname) as imagealt,
+        $query = "select  concat(t1.id, t2.id) as uniqueId, t1.id as id, t1.firstname, t1.lastname, t1.email, t5.shortname as role, concat(t1.firstname, ' ', t1.lastname) as imagealt,
         t1.picture, t1.firstnamephonetic, t1.lastnamephonetic, t1.middlename, t1.alternatename   
         from {user} as t1  
         inner join {user_enrolments} as t2 on t1.id = t2.userid
