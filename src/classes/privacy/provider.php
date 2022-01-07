@@ -15,23 +15,17 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Privacy Subsystem implementation for filter_activityname.
+ * This filter must be put before Auto-linking with Manage Filters to work properly.
  *
  * @package    filter_recitactivity
- * @copyright  2018 Andrew Nicols <andrew@nicols.co.uk>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @copyright  2019 RECIT
+ * @license    {@link http://www.gnu.org/licenses/gpl-3.0.html} GNU GPL v3 or later
  */
 
 namespace filter_activitynames\privacy;
 
 defined('MOODLE_INTERNAL') || die();
 
-/**
- * Privacy Subsystem for filter_activitynames implementing null_provider.
- *
- * @copyright  2018 Andrew Nicols <andrew@nicols.co.uk>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
 class provider implements \core_privacy\local\metadata\null_provider {
 
     /**

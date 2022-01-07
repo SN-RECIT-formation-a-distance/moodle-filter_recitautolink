@@ -1,17 +1,16 @@
-
 /* Popup */
-.autolink_popup .modal-dialog {
+body .autolink_popup .modal-dialog {
     width: fit-content;
     width: -moz-fit-content;
     max-width: none !important;
     margin: auto;
 }
 
-.autolink_popup .modal-body {
+body .autolink_popup .modal-body {
     padding: 0;
 }
 
-.autolink_popup iframe {
+body .autolink_popup iframe {
     width: 90vw;
     max-width: 1500px;
     height: 80vh;

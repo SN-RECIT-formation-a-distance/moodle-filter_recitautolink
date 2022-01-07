@@ -20,8 +20,7 @@
  * This filter must be put before Auto-linking with Manage Filters to work properly.
  *
  * @package    filter_recitactivity
- * @copyright  RECITFAD
- * @author     RECITFAD
+ * @copyright  2019 RECIT
  * @license    {@link http://www.gnu.org/licenses/gpl-3.0.html} GNU GPL v3 or later
  */
 
@@ -79,7 +78,7 @@ class filter_recitactivity extends moodle_text_filter {
             return;
         }
 
-        $this->dao = dao_filter_recitautolink_factory::getInstance()->getDAO();
+        $this->dao = filter_recitactivity_dao_factory::getInstance()->getDAO();
         $this->modules = get_fast_modinfo($this->page->course);
         $this->sectionslist = $this->modules->get_section_info_all();
         

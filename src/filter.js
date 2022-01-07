@@ -14,10 +14,12 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package   filter_recitautolink
- * @copyright 2019 RÉCIT 
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
-*/
+ * This filter must be put before Auto-linking with Manage Filters to work properly.
+ *
+ * @package    filter_recitactivity
+ * @copyright  2019 RECIT
+ * @license    {@link http://www.gnu.org/licenses/gpl-3.0.html} GNU GPL v3 or later
+ */
  
 var recit = recit || {};
 recit.filter = recit.filter || {};

@@ -20,13 +20,12 @@
  * This filter must be put before Auto-linking with Manage Filters to work properly.
  *
  * @package    filter_recitactivity
- * @copyright  RECITFAD
- * @author     RECITFAD
+ * @copyright  2019 RECIT
  * @license    {@link http://www.gnu.org/licenses/gpl-3.0.html} GNU GPL v3 or later
  */
 
-$string['filtername'] = "Recit's auto-linking";
-$string['privacy:metadata'] = 'The "Recit\'s auto-linking" plugin does not store any personal data.';
+$string['filtername'] = "RECIT autolink";
+$string['privacy:metadata'] = 'The "Recit autolink" plugin does not store any personal data.';
 $string['character'] = 'The separator character';
 $string['teacherbygroup'] = 'Show teachers in user\'s group only';
 $string['teacherbygroup_desc'] = 'If this is off, d/teacher will display all teachers of the course regardless of the group';

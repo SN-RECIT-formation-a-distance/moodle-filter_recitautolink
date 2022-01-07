@@ -14,16 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-// Activity name filtering install db.
-
 /**
  * This filter must be put before Auto-linking with Manage Filters to work properly.
  *
  * @package    filter_recitactivity
- * @copyright  RECITFAD
- * @author     RECITFAD
+ * @copyright  2019 RECIT
  * @license    {@link http://www.gnu.org/licenses/gpl-3.0.html} GNU GPL v3 or later
  */
+
 /**
  * Installation of xml database.
  */
