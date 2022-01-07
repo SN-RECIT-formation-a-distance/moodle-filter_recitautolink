@@ -46,3 +46,5 @@ Represents the separator character used in the filter. If the character is <b>/<
 	<li>https://www.youtube.com/watch?v=FkpwLCFOUTU</li>
 </ul>
    
+ # Non-standard post-installation steps
+ After installing this plugin, it is necessary to place it before the default Activity linking filter.
