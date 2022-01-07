@@ -1,10 +1,19 @@
 <?php
+/**
+ * Database helper classes
+ *
+ * @package    filter_recitactivity
+ * @copyright  RECITFAD
+ * @author     RECITFAD
+ * @license    {@link http://www.gnu.org/licenses/gpl-3.0.html} GNU GPL v3 or later
+ */
 
 class dao_filter_recitautolink{
      /**
      * This function gets all teachers for a course.
      *
      * @param int $courseid
+     * @param bool $group
      */
     public function load_course_teachers($courseid, $group = false){
         global $USER, $DB;
@@ -54,6 +63,7 @@ class dao_filter_recitautolink{
 }
 
 class dao_filter_recitautolink_factory{
+    /* @var Object: store dao instance */
     private static $_instance;
 
     public static function getInstance()
