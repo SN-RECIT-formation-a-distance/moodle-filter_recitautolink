@@ -100,7 +100,9 @@ class filter_recitactivity extends moodle_text_filter {
     protected function load_course_teachers($courseid, $group = false) {
         global $USER;
 
-        if(count($this->teacherslist) > 0){ return; }
+        if (count($this->teacherslist) > 0) {
+            return;
+        }
         	
 		$this->teacherslist = $this->dao->load_course_teachers($courseid, $group);
 		
@@ -117,19 +119,25 @@ class filter_recitactivity extends moodle_text_filter {
         foreach ($this->sectionslist as $section) {
             $sectionname = (empty($section->name) ? strval($section->section) : $section->name);            
 
-            if($sectionname == $name || get_string('section') . strval($section->section) == $name){// Used for atto plugin, if no name, sectionX
+            if ($sectionname == $name || get_string('section') . strval($section->section) == $name) {// Used for atto plugin, if no name, sectionX
 
                 $sectionname = (empty($section->name) ?  get_string('section') . ' ' . strval($section->section) : $section->name);
-                if (isset($options['title'])) $sectionname = $options['title'];
+                if (isset($options['title'])) {
+                    $sectionname = $options['title'];
+                }
                 $class = '';
-                if (isset($options['class'])) $class = $options['class'];
-                if (!isset($options['target'])) $options['target'] = $this->DEFAULT_TARGET;
+                if (isset($options['class'])) {
+                    $class = $options['class'];
+                }
+                if (!isset($options['target'])) {
+                    $options['target'] = $this->DEFAULT_TARGET;
+                }
                 $anchor = sprintf("%s-%ld", strtolower(get_string('section')), $section->section);
                 
                 $isrestricted = (!$this->is_teacher) && !is_null($section->availability) && !$section->available;
 
                 $availableInfo = "";
-                if($isrestricted){
+                if ($isrestricted) {
                     $courseFormat = course_get_format($COURSE);
                     $renderer = $courseFormat->get_renderer($PAGE);
                     $infoMsg = $renderer->section_availability($section);
@@ -141,7 +149,7 @@ class filter_recitactivity extends moodle_text_filter {
                     $class .= " disabled";
                 }
                 
-                if(($this->context instanceof context_course) && ($this->page->course->format == 'treetopics') && ($options['target'] != '_blank') && !isset($options['popup'])){
+                if (($this->context instanceof context_course) && ($this->page->course->format == 'treetopics') && ($options['target'] != '_blank') && !isset($options['popup'])){
                     $result = sprintf("<a href='#' title='%s' class='%s' data-section='%s' onclick=\"M.recit.course.format.TreeTopics.instance.goToSection(event)\">%s</a>",  $sectionname.' - '.$name, $class, $anchor, $sectionname);
                 }
                 else{
@@ -157,9 +165,11 @@ class filter_recitactivity extends moodle_text_filter {
     }
 
     protected function load_cm_completions() {
-        if(count($this->cmcompletions) > 0){ return; }
+        if(count($this->cmcompletions) > 0){
+            return;
+        }
 
-        $this->cmcompletions =  $this->dao->load_cm_completions($this->page->course->id);
+        $this->cmcompletions = $this->dao->load_cm_completions($this->page->course->id);
     }
 
     /**
@@ -174,12 +184,12 @@ class filter_recitactivity extends moodle_text_filter {
         $avoidModules = array("label");
 
         foreach ($this->modules->cms as $cm) {
-            if(in_array($cm->__get('modname'), $avoidModules)){
+            if (in_array($cm->__get('modname'), $avoidModules)) {
                 continue;
             }
 
             // load only the wanted activity
-            if($activityname != $cm->__get('name')){
+            if ($activityname != $cm->__get('name')) {
                 continue;
             }
 
@@ -189,9 +199,13 @@ class filter_recitactivity extends moodle_text_filter {
 
             $name = s(trim(strip_tags($cm->__get('name'))));
             $title = $name;
-            if (isset($options['title'])) $title = $options['title'];
+            if (isset($options['title'])) {
+                $title = $options['title'];
+            }
             $class = '';
-            if (isset($options['class'])) $class = $options['class'];
+            if (isset($options['class'])) {
+                $class = $options['class'];
+            }
             $currentname = trim($cm->__get('name'));
 
             // Avoid empty or unlinkable activity names.
@@ -210,13 +224,15 @@ class filter_recitactivity extends moodle_text_filter {
             $completiondata->overrideby = null;
             $completiondata->timemodified = 0;
 
-            if(isset($this->cmcompletions[$cm->__get('id')])){
+            if (isset($this->cmcompletions[$cm->__get('id')])) {
                 $completiondata = $this->cmcompletions[$cm->__get('id')];
             }
 
             $cmcompletion = $this->course_section_cm_completion($cm, $completiondata);
             $isrestricted = (!$cm->__get('uservisible') || !empty($cm->availableinfo) || ($cm->__get('visible') == 0));
-            if ($this->is_teacher) $isrestricted = false;
+            if ($this->is_teacher) {
+                $isrestricted = false;
+            }
 
             $courseactivity = new stdClass();
             $courseactivity->cmname = $cmname;
@@ -225,7 +241,7 @@ class filter_recitactivity extends moodle_text_filter {
             $courseactivity->id = $cm->__get('id');
             $courseactivity->uservisible = $cm->uservisible;
 
-            if($isrestricted){
+            if ($isrestricted) {
                 $courseactivity->href_tag_begin = html_writer::start_tag('a', array('class' => "$class disabled ",
                     'title' => $title, 'href' => '#'));
                 $courseactivity->href_tag_end = '</a>';
@@ -234,11 +250,11 @@ class filter_recitactivity extends moodle_text_filter {
                 if ($cm->availableinfo){
                     $messageRestricted = htmlspecialchars(\core_availability\info::format_info($cm->availableinfo, $this->page->course->id));
                 }
-                else if($cm->__get('visible') == 0){
+                else if ($cm->__get('visible') == 0) {
                     $messageRestricted = get_string('hiddenfromstudents');
                 }
                 
-                if(strlen($messageRestricted) > 0){
+                if (strlen($messageRestricted) > 0) {
                     $courseactivity->href_tag_end .= "<button type='button' class='btn btn-sm btn-link' data-html='true' data-container='body' title='".get_string('restricted')."' data-toggle='popover' data-placement='bottom' data-content=\"$messageRestricted\">";
                     $courseactivity->href_tag_end .= "<i class='fa fa-info-circle'></i>";
                     $courseactivity->href_tag_end .= "</button>";
@@ -333,7 +349,7 @@ class filter_recitactivity extends moodle_text_filter {
         global $USER, $OUTPUT, $COURSE;
 
         // This filter is only applied where the courseId is greater than 1, it means, a real course.
-        if($this->page->course->id <= 1){
+        if ($this->page->course->id <= 1) {
             return $text;
         }
 
@@ -375,7 +391,7 @@ class filter_recitactivity extends moodle_text_filter {
                     $attributes['class'] = $str[1];
                     unset($items[$i]);
                 }
-                
+      
                 // In case of /desc:name
                 if(substr($param, 0, 4) == 'desc' && strpos($param, ':') !== false && strpos($param, '"') !== false){
                     $param = str_replace('"', '', $param);
@@ -501,12 +517,14 @@ class filter_recitactivity extends moodle_text_filter {
         // Return all content bank content that matches the search criteria and can be viewed/accessed by the user.
         $coursecontext = \context_course::instance($PAGE->course->id);
         $list = $this->get_h5p_search_contents($name, $coursecontext->id);
-        if (!isset($list[0])) return;
+        if (!isset($list[0])) {
+            return;
+        }
         $h5p = $list[0];
         $source = json_decode(base64_decode($h5p['source']));
         autoloader::register();
 
-        $url = \moodle_url::make_pluginfile_url($source->contextid, 'contentbank', 'public', $source->itemid.'/'. $source->filename, null, null );
+        $url = \moodle_url::make_pluginfile_url($source->contextid, 'contentbank', 'public', $source->itemid.'/'. $source->filename, null, null);
         $url = $url->out();
         return "<div class='h5p-placeholder' contenteditable='false'>$url</div>";
     }
@@ -606,10 +624,7 @@ class filter_recitactivity extends moodle_text_filter {
                 $output .= html_writer::tag('span', $this->renderPixIcon($completionpixicon),
                     array('class' => 'autocompletion'));
             } else if ($completion == COMPLETION_TRACKING_MANUAL) {
-                $newstate =
-                $completiondata->completionstate == COMPLETION_COMPLETE
-                ? COMPLETION_INCOMPLETE
-                : COMPLETION_COMPLETE;
+                $newstate = $completiondata->completionstate == COMPLETION_COMPLETE ? COMPLETION_INCOMPLETE : COMPLETION_COMPLETE;
                 // In manual mode the icon is a toggle form...
 
                 // If this completion state is used by the
