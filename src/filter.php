@@ -27,8 +27,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-define("DEFAULT_TARGET", '_self');
-
 require_once(__DIR__."/classes/dao.php");
 
 require_once(__DIR__ . '/../../h5p/lib.php');
@@ -59,7 +57,9 @@ class filter_recitactivity extends moodle_text_filter {
     /** @var object */
     protected $context = null;
     /** @var boolean */
-    protected $isTeacher = false;
+    protected $is_teacher = false;
+    /** @var string */
+    protected $DEFAULT_TARGET = '_self';
 
     /**
      * Setup function loads teachers and activities.
@@ -106,7 +106,7 @@ class filter_recitactivity extends moodle_text_filter {
 		
         foreach($this->teacherslist as $item){
             if ($USER->id == $item->id){
-                $this->isTeacher = true;
+                $this->is_teacher = true;
             } 
         }
     } 
@@ -123,10 +123,10 @@ class filter_recitactivity extends moodle_text_filter {
                 if (isset($options['title'])) $sectionname = $options['title'];
                 $class = '';
                 if (isset($options['class'])) $class = $options['class'];
-                if (!isset($options['target'])) $options['target'] = DEFAULT_TARGET;
+                if (!isset($options['target'])) $options['target'] = $this->DEFAULT_TARGET;
                 $anchor = sprintf("%s-%ld", strtolower(get_string('section')), $section->section);
                 
-                $isrestricted = (!$this->isTeacher) && !is_null($section->availability) && !$section->available;
+                $isrestricted = (!$this->is_teacher) && !is_null($section->availability) && !$section->available;
 
                 $availableInfo = "";
                 if($isrestricted){
@@ -216,7 +216,7 @@ class filter_recitactivity extends moodle_text_filter {
 
             $cmcompletion = $this->course_section_cm_completion($cm, $completiondata);
             $isrestricted = (!$cm->__get('uservisible') || !empty($cm->availableinfo) || ($cm->__get('visible') == 0));
-            if ($this->isTeacher) $isrestricted = false;
+            if ($this->is_teacher) $isrestricted = false;
 
             $courseactivity = new stdClass();
             $courseactivity->cmname = $cmname;
@@ -279,7 +279,7 @@ class filter_recitactivity extends moodle_text_filter {
         if (isset($options['title'])) $title = $options['title'];
         $class = '';
         if (isset($options['class'])) $class = $options['class'];
-        if (!isset($options['target'])) $options['target'] = DEFAULT_TARGET; 
+        if (!isset($options['target'])) $options['target'] = $this->DEFAULT_TARGET; 
         // Avoid unnecessary duplication: if e.g. a forum name already
         // includes the word forum (or Forum, etc) then it is unhelpful
         // to include that in the accessible description that is added.
@@ -332,7 +332,7 @@ class filter_recitactivity extends moodle_text_filter {
     public function filter($text, array $options = array()) {
         global $USER, $OUTPUT, $COURSE;
 
-        // this filter is only applied where the courseId is greater than 1, it means, a real course.
+        // This filter is only applied where the courseId is greater than 1, it means, a real course.
         if($this->page->course->id <= 1){
             return $text;
         }
@@ -347,7 +347,7 @@ class filter_recitactivity extends moodle_text_filter {
         $sep = get_config('filter_recitactivity', 'character');
         $showteacherbygroup = get_config('filter_recitactivity', 'teacherbygroup');
         if(empty($sep)){
-            $sep = "/"; // Caractère servant de séparateur. Défaut : /
+            $sep = "/"; // Char to split string into parameters. Default : /
         }
 
         preg_match_all('#(\[\[)([^\]]+)(\]\])#', $text, $matches);
@@ -360,10 +360,10 @@ class filter_recitactivity extends moodle_text_filter {
             $attributes = array();
 
 
-            $attributes['target'] = DEFAULT_TARGET;
+            $attributes['target'] = $this->DEFAULT_TARGET;
             $items = explode($sep, $match);
 
-            //Build options array
+            // Build options array
             foreach ($items as $i => $item){
                 $complement = str_replace("]]", "", $item);
                 $param = str_replace("[[", "", $item);
@@ -398,7 +398,7 @@ class filter_recitactivity extends moodle_text_filter {
             }
 
 
-            // In case "[[ActivityName]]".
+            // In case of "[[ActivityName]]"
             if (count($items) == 1 && isset($items[0]) && strpos($items[0], '[[') !== false) {
                 $items[0] = str_replace("[[", "", $items[0]);
                 $complement = str_replace("]]", "", $items[0]);
@@ -506,7 +506,7 @@ class filter_recitactivity extends moodle_text_filter {
         $source = json_decode(base64_decode($h5p['source']));
         autoloader::register();
 
-        $url  = \moodle_url::make_pluginfile_url($source->contextid, 'contentbank', 'public', $source->itemid.'/'. $source->filename, null, null );
+        $url = \moodle_url::make_pluginfile_url($source->contextid, 'contentbank', 'public', $source->itemid.'/'. $source->filename, null, null );
         $url = $url->out();
         return "<div class='h5p-placeholder' contenteditable='false'>$url</div>";
     }
@@ -650,7 +650,7 @@ class filter_recitactivity extends moodle_text_filter {
 
     }
 
-    protected function renderPixIcon(pix_icon $obj){
+    protected function renderPixIcon(pix_icon $obj) {
         global $OUTPUT;
 
         $template = $obj->export_for_template($OUTPUT);
