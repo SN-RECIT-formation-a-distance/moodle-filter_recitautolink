@@ -36,9 +36,6 @@ use core_h5p\local\library\autoloader;
  *
  * Attention: do not utilise the global variables $PAGE and $COURSE. Instead, use $this->page and $this->page->course.
  * When the filter is used by some ajax service (like TreeTopics) the global variables are not set as it should but $this->page is so.
- * 
- * @copyright   RECITFAD
- * @license    {@link http://www.gnu.org/licenses/gpl-3.0.html} GNU GPL v3 or later
  */
 class filter_recitactivity extends moodle_text_filter {
     /** @var array teachers list */
