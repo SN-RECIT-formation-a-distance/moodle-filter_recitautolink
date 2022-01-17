@@ -22,7 +22,7 @@
  * @license    {@link http://www.gnu.org/licenses/gpl-3.0.html} GNU GPL v3 or later
  */
 
-namespace filter_activitynames\privacy;
+namespace filter_recitactivity\privacy;
 
 defined('MOODLE_INTERNAL') || die();
 
