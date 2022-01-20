@@ -36,7 +36,7 @@ class filter_recitactivity_dao {
 
         $where = "where t3.courseid = :courseid";
 
-        $query = "select concat(t1.id, t2.id) uniqueId, t1.id as id, t1.firstname, t1.lastname, t1.email, t5.shortname as role, concat(t1.firstname, ' ', t1.lastname) imagealt,
+        $query = "select concat(t1.id, t2.id, t4.id) uniqueId, t1.id as id, t1.firstname, t1.lastname, t1.email, t5.shortname as role, concat(t1.firstname, ' ', t1.lastname) imagealt,
         t1.picture, t1.firstnamephonetic, t1.lastnamephonetic, t1.middlename, t1.alternatename
         from {user} t1
         inner join {user_enrolments} t2 on t1.id = t2.userid
