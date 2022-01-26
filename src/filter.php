@@ -79,7 +79,9 @@ class filter_recitactivity extends moodle_text_filter {
         $this->modules = get_fast_modinfo($this->page->course);
         $this->sectionslist = $this->modules->get_section_info_all();
         
-        $page->requires->js(new moodle_url($CFG->wwwroot .'/filter/recitactivity/filter.js'), true);
+        if (isset($page->requires)){
+            $page->requires->js(new moodle_url($CFG->wwwroot .'/filter/recitactivity/filter.js'), true);
+        }
 
         $this->load_course_teachers($this->page->course->id);
 
@@ -145,13 +147,15 @@ class filter_recitactivity extends moodle_text_filter {
                     $class .= " disabled";
                 }
                 
+                $tagattr = array('class' => 'autolink '.$class, 'title' => $sectionname.' - '.$name, 'target' => $options['target']);
+                $href = "#";
                 if (($this->context instanceof context_course) && ($this->page->course->format == 'treetopics') && ($options['target'] != '_blank') && !isset($options['popup'])){
-                    $result = sprintf("<a href='#' title='%s' class='%s' data-section='%s' onclick=\"M.recit.course.format.TreeTopics.instance.goToSection(event)\">%s</a>",  $sectionname.' - '.$name, $class, $anchor, $sectionname);
+                    $tagattr['onclick'] = "M.recit.course.format.TreeTopics.instance.goToSection(event)";
                 }
                 else{
-                    $href = $CFG->wwwroot."/course/view.php?id=".$this->page->course->id;
-                    $result = sprintf("<a title='%s' class='%s' href='%s' target='".$options['target']."'>%s</a>", $sectionname.' - '.$name, $class, $href . "&section={$section->section}&t=".microtime()."#$anchor", $sectionname);
+                    $href = new moodle_url('/course/view.php', array('id' => $this->page->course->id, 'section' => $section->section), $anchor);
                 }
+                $result = html_writer::link($href, $sectionname, $tagattr);
 
                 return "<span>$result$availableInfo</span>";
             }
@@ -314,7 +318,11 @@ class filter_recitactivity extends moodle_text_filter {
             if (isset($options['popup'])){
                 $url = 'javascript:recit.filter.autolink.popupIframe("'.$url.'&autolinkpopup=1");';
             }
-            $output .= html_writer::link($url, $activitylink, array('class' => 'aalink '.$class, 'onclick' => $onclick, 'target' => $options['target'], 'title' => $title));
+            $attributes = array('class' => 'autolink '.$class, 'title' => $title, 'href' => $url, 'target' => $options['target']);
+            if (!empty($onclick)){
+                $attributes['onclick'] = $onclick;
+            }
+            $output .= html_writer::tag('a', $activitylink, $attributes);
         } else {
             // We may be displaying this just in order to show information
             // about visibility, without the actual link ($mod->is_visible_on_course_page()).
