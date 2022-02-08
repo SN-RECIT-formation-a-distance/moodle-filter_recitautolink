@@ -1,4 +1,7 @@
 # mp-filter-recitautolink
+
+<a href='https://github.com/SN-RECIT-formation-a-distance/moodle-filter_recitautolink/blob/master/README-fr.md'>Pour la traduction française.</a>
+
 This filter allows, among other things, the display of the activity icon as well as a check mark indicating the status of a completed activity. It also allows you to take advantage of Moodle's database and create a more personalized experience. The examples below show you the available integration codes and the result on the user's screen.
 
 [![Youtube video](https://img.youtube.com/vi/FkpwLCFOUTU/0.jpg)](https://www.youtube.com/watch?v=FkpwLCFOUTU)
