@@ -1,6 +1,8 @@
 # mp-filter-recitautolink (English)
 This filter allows, among other things, the display of the activity icon as well as a check mark indicating the status of a completed activity. It also allows you to take advantage of Moodle's database and create a more personalized experience. The examples below show you the available integration codes and the result on the user's screen.
- 
+
+[![Youtube video](https://img.youtube.com/vi/FkpwLCFOUTU/0.jpg)](https://www.youtube.com/watch?v=FkpwLCFOUTU)
+
 ## Link to the activity
 <img src='https://github.com/SN-RECIT-formation-a-distance/moodle-filter_recitautolink/blob/master/docs/filtre2.jpg' alt='Link to the activity' width='500px'/>
 The attached example shows the display of a link to an activity. The left side shows the learner's screen. On the right-hand side, we see the integration code in the editor. The i/ parameter displays the activity icon, the c/ parameter displays the hook and the exact name of the activity title displays the link to the activity.
