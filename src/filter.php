@@ -27,6 +27,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once(__DIR__."/classes/dao.php");
+require_once(__DIR__."/lib.php");
 
 require_once(__DIR__ . '/../../h5p/lib.php');
 use core_h5p\local\library\autoloader;
@@ -78,10 +79,6 @@ class filter_recitactivity extends moodle_text_filter {
         $this->dao = filter_recitactivity_dao_factory::getInstance()->getDAO();
         $this->modules = get_fast_modinfo($this->page->course);
         $this->sectionslist = $this->modules->get_section_info_all();
-        
-        if (isset($page->requires)){
-            $page->requires->js(new moodle_url($CFG->wwwroot .'/filter/recitactivity/filter.js'), true);
-        }
 
         $this->load_course_teachers($this->page->course->id);
 
