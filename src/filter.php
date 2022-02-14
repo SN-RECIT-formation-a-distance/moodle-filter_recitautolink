@@ -117,8 +117,10 @@ class filter_recitactivity extends moodle_text_filter {
             if ($sectionname == $name || get_string('section') . strval($section->section) == $name) {// Used for atto plugin, if no name, sectionX
 
                 $sectionname = (empty($section->name) ?  get_string('section') . ' ' . strval($section->section) : $section->name);
+                $title = $sectionname;
                 if (isset($options['title'])) {
                     $sectionname = $options['title'];
+                    $title = $sectionname.' - '.$name;
                 }
                 $class = '';
                 if (isset($options['class'])) {
@@ -144,14 +146,10 @@ class filter_recitactivity extends moodle_text_filter {
                     $class .= " disabled";
                 }
                 
-                $tagattr = array('class' => 'autolink '.$class, 'title' => $sectionname.' - '.$name, 'target' => $options['target']);
+                $tagattr = array('class' => 'autolink '.$class, 'title' => $title, 'target' => $options['target'], 'onclick' => 'this.search == document.location.search && setTimeout(location.reload.bind(location), 50)');
                 $href = "#";
-                if (($this->context instanceof context_course) && ($this->page->course->format == 'treetopics') && ($options['target'] != '_blank') && !isset($options['popup'])){
-                    $tagattr['onclick'] = "M.recit.course.format.TreeTopics.instance.goToSection(event)";
-                }
-                else{
-                    $href = new moodle_url('/course/view.php', array('id' => $this->page->course->id, 'section' => $section->section), $anchor);
-                }
+                $href = new moodle_url('/course/view.php', array('id' => $this->page->course->id, 'section' => $section->section), $anchor);
+                
                 $result = html_writer::link($href, $sectionname, $tagattr);
 
                 return "<span>$result$availableInfo</span>";
