@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-// Activity name filtering version control.
-
 /**
  * This filter must be put before Auto-linking with Manage Filters to work properly.
  *
@@ -26,8 +24,17 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2022020901;        // The current plugin version (Date: YYYYMMDDXX).
-$plugin->requires  = 2020061500.00; // Moodle 3.9.0
-$plugin->component = 'filter_recitactivity'; // Full name of the plugin (used for diagnostics).
-$plugin->release = 'v1.15.1';
-$plugin->maturity = MATURITY_BETA;
+$capabilities = [
+
+
+    'filter/recitactivity:teacher' => [
+        'riskbitmask' => RISK_PERSONAL,
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'noneditingteacher' => CAP_ALLOW
+        ]
+    ],
+];

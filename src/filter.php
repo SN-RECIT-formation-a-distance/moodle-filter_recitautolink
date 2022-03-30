@@ -92,14 +92,15 @@ class filter_recitactivity extends moodle_text_filter {
      *
      * @param int $courseid
      */
-    protected function load_course_teachers($courseid, $group = false) {
+    protected function load_course_teachers($courseid) {
         global $USER;
 
         if (count($this->teacherslist) > 0) {
             return;
         }
         	
-		$this->teacherslist = $this->dao->load_course_teachers($courseid, $group);
+        $showteacherbygroup = get_config('filter_recitactivity', 'teacherbygroup');
+		$this->teacherslist = $this->dao->load_course_teachers($courseid, $showteacherbygroup);
 		
         foreach($this->teacherslist as $item){
             if ($USER->id == $item->id){
@@ -360,7 +361,6 @@ class filter_recitactivity extends moodle_text_filter {
         $matches = array();
 
         $sep = get_config('filter_recitactivity', 'character');
-        $showteacherbygroup = get_config('filter_recitactivity', 'teacherbygroup');
         if(empty($sep)){
             $sep = "/"; // Char to split string into parameters. Default : /
         }
@@ -473,7 +473,6 @@ class filter_recitactivity extends moodle_text_filter {
                     }
                     break;
                 case "d":
-                    $this->load_course_teachers($this->page->course->id, $showteacherbygroup);
 
                     if ($complement == "user.firstname") {
                         $result = str_replace($match, $USER->firstname, $result);
@@ -489,6 +488,9 @@ class filter_recitactivity extends moodle_text_filter {
                     } else if ($complement == "course.fullname") {
                         $result = str_replace($match, $COURSE->fullname, $result);
                     } else {
+                        if (empty($this->teacherslist) && substr($complement, 0, 8) == "teacher1"){
+                            $result = str_replace($match, "<div class='alert alert-danger'>".get_string('noteacheringroup','filter_recitactivity')."</div>", $result);
+                        }
                         foreach ($this->teacherslist as $index => $teacher) {
                             $nb = $index + 1;
                             if ($complement == "teacher$nb.firstname") {

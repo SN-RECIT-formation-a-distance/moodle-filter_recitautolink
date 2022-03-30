@@ -25,6 +25,9 @@
  */
 
 $string['filtername'] = "RECIT autolink";
+$string['pluginname'] = "RECIT autolink";
+$string['noteacheringroup'] = "Teacher undefined";
+$string['recitactivity:teacher'] = "Show teacher's name";
 $string['privacy:metadata'] = 'The "Recit autolink" plugin does not store any personal data.';
 $string['character'] = 'The separator character';
 $string['teacherbygroup'] = 'Show teachers in user\'s group only';
