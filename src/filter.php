@@ -109,6 +109,12 @@ class filter_recitactivity extends moodle_text_filter {
         }
     } 
 
+    /**
+     * This function gets section by name
+     *
+     * @param string $name
+     * @param array $options
+     */
     protected function get_section($name, $options = array()){
         global $CFG, $PAGE, $COURSE;
 
@@ -160,6 +166,9 @@ class filter_recitactivity extends moodle_text_filter {
         return null;
     }
 
+    /**
+     * This function loads module completion
+     */
     protected function load_cm_completions() {
         if(count($this->cmcompletions) > 0){
             return;
@@ -170,6 +179,10 @@ class filter_recitactivity extends moodle_text_filter {
 
     /**
      * Get array variable course activities list
+     * 
+     * @param string $activityname
+     * @param string $param
+     * @param array $options
      */
     protected function load_course_activities_list($activityname, $param = '', $options = array()) {
         global $USER;
@@ -274,6 +287,12 @@ class filter_recitactivity extends moodle_text_filter {
         return null;
     }
 
+    /**
+     * This function gets course module name
+     *
+     * @param cm_info $mod
+     * @param array $options
+     */
     protected function get_cm_name(cm_info $mod, $options = array()) {
         $output = '';
         $url = $mod->__get('url');
@@ -331,6 +350,8 @@ class filter_recitactivity extends moodle_text_filter {
      * Extract activity by name.
      *
      * @param string $name
+     * @param string $param
+     * @param array $options
      * @return $item from array course activities list|null
      */
     protected function get_course_activity($name, $param = '', $options = array()) {
@@ -513,6 +534,11 @@ class filter_recitactivity extends moodle_text_filter {
         return $result;
     }
 
+    /**
+     * Extract h5p by name.
+     *
+     * @param string $name
+     */
     public function getH5PFromName($name){
         global $PAGE;
         // Return all content bank content that matches the search criteria and can be viewed/accessed by the user.
@@ -530,6 +556,12 @@ class filter_recitactivity extends moodle_text_filter {
         return "<div class='h5p-placeholder' contenteditable='false'>$url</div>";
     }
 
+    /**
+     * Search H5P in context
+     *
+     * @param string $search
+     * @param int $contextid
+     */
     public function get_h5p_search_contents($search, $contextid) {
         $contentbank = new \core_contentbank\contentbank();
         // Return all content bank content that matches the search criteria and can be viewed/accessed by the user.
@@ -542,6 +574,12 @@ class filter_recitactivity extends moodle_text_filter {
         }, []);
     }
 
+    /**
+     * Generate cm completion checkbox
+     *
+     * @param cm_info $mod
+     * @param object $completiondata
+     */
     public function course_section_cm_completion(cm_info $mod, $completiondata) {
         global $CFG, $PAGE;
         $course = $this->page->course;
@@ -666,10 +704,15 @@ class filter_recitactivity extends moodle_text_filter {
 
     }
 
-    protected function renderPixIcon(pix_icon $obj) {
+    /**
+     * Render pix icon
+     *
+     * @param pix_icon $icon
+     */
+    protected function renderPixIcon(pix_icon $icon) {
         global $OUTPUT;
 
-        $template = $obj->export_for_template($OUTPUT);
+        $template = $icon->export_for_template($OUTPUT);
 
         $attrs = array();
         foreach($template['attributes'] as $item){

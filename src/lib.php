@@ -24,6 +24,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+/**
+ * This function is a Moodle callback used to inject javascript in the page
+*/
 function filter_recitactivity_before_standard_top_of_body_html() {
     global $PAGE;
 

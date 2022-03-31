@@ -24,6 +24,12 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+/**
+ * DB helper class
+ *
+ * @copyright  2019 RECIT
+ * @license    {@link http://www.gnu.org/licenses/gpl-3.0.html} GNU GPL v3 or later
+ */
 class filter_recitactivity_dao {
      /**
       * This function gets all teachers for a course.
@@ -46,6 +52,11 @@ class filter_recitactivity_dao {
         return array_values($users);
     }
 
+     /**
+      * This function gets module completion for student
+      *
+      * @param int $courseid
+      */
     public function load_cm_completions($courseid) {
         global $USER, $DB;
 
@@ -64,10 +75,19 @@ class filter_recitactivity_dao {
     }
 }
 
+/**
+ * DB helper factory
+ *
+ * @copyright  2019 RECIT
+ * @license    {@link http://www.gnu.org/licenses/gpl-3.0.html} GNU GPL v3 or later
+ */
 class filter_recitactivity_dao_factory{
-    /* @var Object: store dao instance */
+    /** @var object $instance store dao instance */
     private static $instance;
 
+     /**
+      * This function gets dao instance
+      */
     public static function getInstance() {
 		if(!self::$instance) {
 			self::$instance = new self;
@@ -76,6 +96,9 @@ class filter_recitactivity_dao_factory{
 		return self::$instance;
 	}
  
+     /**
+      * This function gets dao object
+      */
 	public function getDAO() {
         return new filter_recitactivity_dao();
 	}
