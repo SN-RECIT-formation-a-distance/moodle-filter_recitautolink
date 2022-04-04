@@ -509,8 +509,9 @@ class filter_recitactivity extends moodle_text_filter {
                     } else if ($complement == "course.fullname") {
                         $result = str_replace($match, $COURSE->fullname, $result);
                     } else {
-                        if (empty($this->teacherslist) && substr($complement, 0, 8) == "teacher1"){
-                            $result = str_replace($match, "<div class='alert alert-danger'>".get_string('noteacheringroup','filter_recitactivity')."</div>", $result);
+                        if (empty($this->teacherslist) && substr($complement, 0, 8) == "teacher1"){                            
+                            $result = str_replace($match, "($match <button type='button' class='btn btn-sm btn-link' data-html='true' title='' data-container='body' data-toggle='popover' data-placement='bottom' 
+                                                                    data-content='".get_string('noteacheringroup','filter_recitactivity')."' data-original-title=''><i class='fa fa-info-circle'></i></button></button>", $result);
                         }
                         foreach ($this->teacherslist as $index => $teacher) {
                             $nb = $index + 1;
