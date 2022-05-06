@@ -28,7 +28,7 @@ recit.filter.autolink = recit.filter.autolink || {};
 recit.filter.autolink.Popup = class {
     constructor(content) {        
         let modal = document.createElement('div');
-        modal.classList.add('modal', 'fade', 'autolink_popup');
+        modal.classList.add('modal', 'fade', 'recitautolink_popup');
         let inner2 = document.createElement('div');
         inner2.classList.add('modal-dialog');
         inner2.classList.add('modal-dialog-centered');
