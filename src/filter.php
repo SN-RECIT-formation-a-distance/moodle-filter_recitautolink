@@ -275,7 +275,7 @@ class filter_recitactivity extends moodle_text_filter {
             else{
                 $tagattr = array('class' => 'autolink '.$class, 'title' => $title, 'href' => $cm->__get('url'), 'target' => $options['target']);
                 if (isset($options['popup'])){
-                    $tagattr['href'] = 'javascript:recit.filter.autolink.popupIframe("'.$tagattr['href'].'&autolinkpopup=1");';
+                    $tagattr['href'] = 'javascript:recit.filter.autolink.popupIframe("'.$tagattr['href'].'&autolinkpopup=1", "'.$options['popupclass'].'");';
                 }
                 $courseactivity->href_tag_begin = html_writer::start_tag('a', $tagattr);
                 $courseactivity->href_tag_end = '</a>';
@@ -331,7 +331,7 @@ class filter_recitactivity extends moodle_text_filter {
         $activitylink = html_writer::empty_tag('img', array('src' => $mod->get_icon_url(), 'class' => 'iconlarge activityicon', 'alt' => '', 'role' => 'presentation', 'aria-hidden' => 'true')) . html_writer::tag('span', $title, array('class' => 'instancename'));
         if ($mod->__get('uservisible')) {
             if (isset($options['popup'])){
-                $url = 'javascript:recit.filter.autolink.popupIframe("'.$url.'&autolinkpopup=1");';
+                $url = 'javascript:recit.filter.autolink.popupIframe("'.$url.'&autolinkpopup=1", "'.$options['popupclass'].'");';
             }
             $attributes = array('class' => 'autolink '.$class, 'title' => $title, 'href' => $url, 'target' => $options['target']);
             if (!empty($onclick)){
@@ -423,6 +423,12 @@ class filter_recitactivity extends moodle_text_filter {
                 // In case of /p popup
                 if ($param == 'p'){
                     $attributes['popup'] = true;
+                    $attributes['popupclass'] = '';
+                    unset($items[$i]);
+                }
+                if ($param == 'p16x9'){
+                    $attributes['popup'] = true;
+                    $attributes['popupclass'] = 'recitautolink_popup_16x9';
                     unset($items[$i]);
                 }
                 

@@ -70,10 +70,11 @@ recit.filter.autolink.Popup = class {
       }
 }
 
-recit.filter.autolink.popupIframe = function(url){
+recit.filter.autolink.popupIframe = function(url, className){
     let content = document.createElement('iframe');
     content.src = url;
     let popup = new recit.filter.autolink.Popup(content);
+    popup.popup.classList.add(className)
     content.onload = () => {
         popup.title.innerText = content.contentDocument.title;
         if (!content.contentWindow.document.querySelector('iframe')){
@@ -88,7 +89,6 @@ recit.filter.autolink.popupIframe = function(url){
             style.setAttribute('type', 'text/css'); 
             style.appendChild(document.createTextNode(css));
             content.contentWindow.document.head.appendChild(style);
-            console.log(style);
         }
 
         popup.update();

@@ -17,3 +17,10 @@ body .recitautolink_popup iframe {
     max-height: 80vh;
     border: 0; 
 }
+
+body .recitautolink_popup_16x9 iframe {
+    width: 70vw !important; 
+    max-width: 1500px; 
+    height: 85vh !important;
+    border: 0; 
+}
