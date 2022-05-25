@@ -74,7 +74,9 @@ recit.filter.autolink.popupIframe = function(url, className){
     let content = document.createElement('iframe');
     content.src = url;
     let popup = new recit.filter.autolink.Popup(content);
-    popup.popup.classList.add(className)
+    if (className.length > 0){
+        popup.popup.classList.add(className);
+    }
     content.onload = () => {
         popup.title.innerText = content.contentDocument.title;
         if (!content.contentWindow.document.querySelector('iframe')){
