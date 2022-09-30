@@ -26,8 +26,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2022052600;        // The current plugin version (Date: YYYYMMDDXX).
+$plugin->version   = 2022100100;        // The current plugin version (Date: YYYYMMDDXX).
 $plugin->requires  = 2020061500.00; // Moodle 3.9.0
-$plugin->component = 'filter_recitactivity'; // Full name of the plugin (used for diagnostics).
-$plugin->release = 'v1.16.0';
-$plugin->maturity = MATURITY_BETA;
+$plugin->component = 'filter_recitactivity'; // Full name of the plugin (used for diagnostics)
+$plugin->release = 'v1.16.0-stable';
+$plugin->maturity = MATURITY_STABLE;
+$plugin->supported = [39, 311];      //  Moodle 3.9.x, 3.10.x and 3.11.x are supported..
