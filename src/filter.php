@@ -55,6 +55,8 @@ class filter_recitactivity extends moodle_text_filter {
     protected $context = null;
     /** @var boolean */
     protected $is_teacher = false;
+    /** @var int */
+    protected $courseid = 0;
     /** @var string */
     protected $DEFAULT_TARGET = '_self';
 
@@ -72,15 +74,20 @@ class filter_recitactivity extends moodle_text_filter {
         $this->page = $page;
 
         // this filter is only applied where the courseId is greater than 1, it means, a real course.
-        if($this->page->course->id <= 1){
+        $coursectx = $this->context->get_course_context(false);
+        if (!$coursectx) {
+            return;
+        }
+        $this->courseid = $coursectx->instanceid;
+        if($this->courseid <= 1){
             return;
         }
 
         $this->dao = filter_recitactivity_dao_factory::getInstance()->getDAO();
-        $this->modules = get_fast_modinfo($this->page->course);
+        $this->modules = get_fast_modinfo($this->courseid);
         $this->sectionslist = $this->modules->get_section_info_all();
 
-        $this->load_course_teachers($this->page->course->id);
+        $this->load_course_teachers($this->courseid);
 
         if (isset($_GET['autolinkpopup'])){
             $page->set_pagelayout('popup');
@@ -370,7 +377,7 @@ class filter_recitactivity extends moodle_text_filter {
         global $USER, $OUTPUT, $COURSE;
 
         // This filter is only applied where the courseId is greater than 1, it means, a real course.
-        if ($this->page->course->id <= 1) {
+        if ($this->courseid <= 1) {
             return $text;
         }
 
