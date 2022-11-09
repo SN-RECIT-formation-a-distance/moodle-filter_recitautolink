@@ -73,6 +73,10 @@ class filter_recitactivity extends moodle_text_filter {
         $this->context = $context;
         $this->page = $page;
 
+        if (isset($_GET['autolinkpopup'])){
+            $page->set_pagelayout('popup');
+        }
+
         // this filter is only applied where the courseId is greater than 1, it means, a real course.
         $coursectx = $this->context->get_course_context(false);
         if (!$coursectx) {
@@ -88,10 +92,6 @@ class filter_recitactivity extends moodle_text_filter {
         $this->sectionslist = $this->modules->get_section_info_all();
 
         $this->load_course_teachers($this->courseid);
-
-        if (isset($_GET['autolinkpopup'])){
-            $page->set_pagelayout('popup');
-        }
     }
 
     /**
