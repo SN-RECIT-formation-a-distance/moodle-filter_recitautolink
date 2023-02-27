@@ -47,7 +47,7 @@ class filter_recitactivity_dao {
             }
         }
         $coursecontext = context_course::instance($courseid);
-        $users = get_users_by_capability($coursecontext, 'filter/recitactivity:teacher', '', '', '', '', $group, null, false);
+        $users = get_users_by_capability($coursecontext, 'filter/recitactivity:teacher', '', 'u.firstname ASC', '', '', $group, null, false);
 
         return array_values($users);
     }
