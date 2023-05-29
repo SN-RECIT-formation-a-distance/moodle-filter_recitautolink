@@ -340,6 +340,9 @@ class filter_recitactivity extends moodle_text_filter {
             if (isset($options['popup'])){
                 $url = 'javascript:recit.filter.autolink.popupIframe("'.$url.'&autolinkpopup=1", "'.$options['popupclass'].'");';
             }
+            if (isset($options['completion'])){
+                $activitylink = '%s '.$activitylink;
+            }
             $attributes = array('class' => 'autolink '.$class, 'title' => $title, 'href' => $url, 'target' => $options['target']);
             if (!empty($onclick)){
                 $attributes['onclick'] = $onclick;
@@ -473,16 +476,17 @@ class filter_recitactivity extends moodle_text_filter {
                     if ($activity != null) {
                         $title = $activity->currentname;
                         if (isset($attributes['title'])) $title = $attributes['title'];
-                        $result = str_replace($match, sprintf("%s %s %s %s", $activity->cmcompletion,
-                                $activity->href_tag_begin, $title, $activity->href_tag_end), $result);
+                        $result = str_replace($match, sprintf("%s %s %s %s",
+                                $activity->href_tag_begin, $activity->cmcompletion, $title, $activity->href_tag_end), $result);
                     }
                     break;
                 case "ci":
                 case "ic":
                     $this->load_cm_completions();
+                    $attributes['completion'] = true;
                     $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
-                        $result = str_replace($match, sprintf("%s %s", $activity->cmcompletion, $activity->cmname), $result);
+                        $result = str_replace($match, sprintf($activity->cmname, $activity->cmcompletion), $result);
                     }
                     break;
                 case "l":
@@ -622,97 +626,33 @@ class filter_recitactivity extends moodle_text_filter {
 
         $completionicon = '';
 
-        if ($PAGE->user_is_editing()) {
-            switch ($completion) {
-                case COMPLETION_TRACKING_MANUAL :
-                    $completionicon = 'manual-enabled';
-                    break;
-                case COMPLETION_TRACKING_AUTOMATIC :
-                    $completionicon = 'auto-enabled';
-                    break;
-            }
-        } else if ($completion == COMPLETION_TRACKING_MANUAL) {
+        if ($completion == COMPLETION_TRACKING_MANUAL) {
             switch ($completiondata->completionstate) {
                 case COMPLETION_INCOMPLETE:
-                    $completionicon = 'manual-n' . ($completiondata->overrideby ? '-override' : '');
+                    $completionicon = 'fa-square-o';
                     break;
                 case COMPLETION_COMPLETE:
-                    $completionicon = 'manual-y' . ($completiondata->overrideby ? '-override' : '');
+                    $completionicon = 'fa-check-square-o';
                     break;
             }
         } else { // Automatic.
             switch ($completiondata->completionstate) {
                 case COMPLETION_INCOMPLETE:
-                    $completionicon = 'auto-n' . ($completiondata->overrideby ? '-override' : '');
+                    $completionicon = 'fa-square-o';
                     break;
                 case COMPLETION_COMPLETE:
-                    $completionicon = 'auto-y' . ($completiondata->overrideby ? '-override' : '');
+                    $completionicon = 'fa-check-square-o';
                     break;
                 case COMPLETION_COMPLETE_PASS:
-                    $completionicon = 'auto-pass';
+                    $completionicon = 'fa-check-square-o';
                     break;
                 case COMPLETION_COMPLETE_FAIL:
-                    $completionicon = 'auto-fail';
+                    $completionicon = 'fa-square-o';
                     break;
             }
         }
         if ($completionicon) {
-            //$formattedname = html_entity_decode($mod->get_formatted_name(), ENT_QUOTES, 'UTF-8');
-            $formattedname = html_entity_decode($mod->__get('name'), ENT_QUOTES, 'UTF-8');
-            $imgalt = $formattedname;
-            /*if ($completiondata->overrideby) {
-                $args = new stdClass();
-                $args->modname = $formattedname;
-                $overridebyuser = \core_user::get_user($completiondata->overrideby, '*', MUST_EXIST);
-                $args->overrideuser = fullname($overridebyuser);
-                $imgalt = get_string('completion-alt-' . $completionicon, 'completion', $args);
-            } else {
-                $imgalt = get_string('completion-alt-' . $completionicon, 'completion', $formattedname);
-            }*/
-
-            if ($PAGE->user_is_editing()) {
-                // When editing, the icon is just an image.
-                $completionpixicon = new pix_icon('i/completion-'.$completionicon, $imgalt, '',
-                    array('title' => $imgalt, 'class' => 'iconsmall'));
-                $output .= html_writer::tag('span', $this->renderPixIcon($completionpixicon),
-                    array('class' => 'autocompletion'));
-            } else if ($completion == COMPLETION_TRACKING_MANUAL) {
-                $newstate = $completiondata->completionstate == COMPLETION_COMPLETE ? COMPLETION_INCOMPLETE : COMPLETION_COMPLETE;
-                // In manual mode the icon is a toggle form...
-
-                // If this completion state is used by the
-                // conditional activities system, we need to turn
-                // off the JS.
-                $extraclass = '';
-                if (!empty($CFG->enableavailability) &&
-                        core_availability\info::completion_value_used($course, $mod->__get('id'))) {
-                    $extraclass = ' preventjs';
-                }
-                $output .= html_writer::start_tag('form', array('method' => 'post',
-                    'action' => new moodle_url('/course/togglecompletion.php'),
-                    'class' => 'togglecompletion'. $extraclass, 'style' => 'display: inline;'));
-                $output .= html_writer::start_tag('div', array('style' => 'display: inline;'));
-                $output .= html_writer::empty_tag('input', array(
-                    'type' => 'hidden', 'name' => 'id', 'value' => $mod->__get('id')));
-                $output .= html_writer::empty_tag('input', array(
-                    'type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()));
-                $output .= html_writer::empty_tag('input', array(
-                    'type' => 'hidden', 'name' => 'modulename', 'value' => $formattedname));
-                $output .= html_writer::empty_tag('input', array(
-                    'type' => 'hidden', 'name' => 'completionstate', 'value' => $newstate));
-                    
-                $completionpixicon = new pix_icon('i/completion-'.$completionicon, $imgalt, '');
-
-                $output .= html_writer::tag('button', $this->renderPixIcon($completionpixicon), array('class' => 'btn btn-link', 'aria-live' => 'assertive', 'style' => 'padding: 0px;'));
-                $output .= html_writer::end_tag('div');
-                $output .= html_writer::end_tag('form');
-            } else {
-                // In auto mode, the icon is just an image.
-                $completionpixicon = new pix_icon('i/completion-'.$completionicon, $imgalt, '',
-                    array('title' => $imgalt));
-                $output .= html_writer::tag('span', $this->renderPixIcon($completionpixicon),
-                    array('class' => 'autocompletion'));
-            }
+                $output .= "<i class='fa $completionicon'></i>";
         }
         return $output;
 
