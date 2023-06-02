@@ -228,7 +228,6 @@ class filter_recitactivity extends moodle_text_filter {
             if (empty($name) || ($cm->deletioninprogress == 1)) {
                 continue;
             }
-            $cmname = $this->get_cm_name($cm, $options);
 
             // Row not present counts as 'not complete'
             $completiondata = new stdClass();
@@ -249,6 +248,9 @@ class filter_recitactivity extends moodle_text_filter {
             if ($this->is_teacher) {
                 $isrestricted = false;
             }
+
+            $options['cmcompletion'] = $cmcompletion;
+            $cmname = $this->get_cm_name($cm, $options);
 
             $courseactivity = new stdClass();
             $courseactivity->cmname = $cmname;
@@ -341,7 +343,7 @@ class filter_recitactivity extends moodle_text_filter {
                 $url = 'javascript:recit.filter.autolink.popupIframe("'.$url.'&autolinkpopup=1", "'.$options['popupclass'].'");';
             }
             if (isset($options['completion'])){
-                $activitylink = '%s '.$activitylink;
+                $activitylink = $options['cmcompletion'].' '.$activitylink;
             }
             $attributes = array('class' => 'autolink '.$class, 'title' => $title, 'href' => $url, 'target' => $options['target']);
             if (!empty($onclick)){
@@ -486,7 +488,7 @@ class filter_recitactivity extends moodle_text_filter {
                     $attributes['completion'] = true;
                     $activity = $this->get_course_activity($complement, $param, $attributes);
                     if ($activity != null) {
-                        $result = str_replace($match, sprintf($activity->cmname, $activity->cmcompletion), $result);
+                        $result = str_replace($match, $activity->cmname, $result);
                     }
                     break;
                 case "l":
