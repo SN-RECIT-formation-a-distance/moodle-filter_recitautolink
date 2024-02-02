@@ -26,33 +26,52 @@ recit.filter = recit.filter || {};
 recit.filter.autolink = recit.filter.autolink || {};
 
 recit.filter.autolink.Popup = class {
-    constructor(content) {        
+    constructor(content, showTitle, showFooter, maxWidth) {        
+        showTitle = (typeof showTitle === 'undefined' ? true : showTitle);
+        showFooter = (typeof showFooter === 'undefined' ? false : showFooter);
+        maxWidth = (typeof maxWidth === 'undefined' ? true : maxWidth);
+
         let modal = document.createElement('div');
-        modal.classList.add('modal', 'fade', 'recitautolink_popup');
+        modal.classList.add('modal', 'fade');
+
+        if(maxWidth){
+            modal.classList.add('recitautolink_popup');
+        }
+
         let inner2 = document.createElement('div');
-        inner2.classList.add('modal-dialog');
-        inner2.classList.add('modal-dialog-centered');
+        inner2.classList.add('modal-dialog', 'modal-dialog-centered');
         modal.appendChild(inner2);
+
         let inner = document.createElement('div');
         inner.classList.add('modal-content');
         inner2.appendChild(inner);
 
-        let header = document.createElement('div');
-        header.classList.add('modal-header');
-        inner.appendChild(header);
-        this.title = document.createElement('h3');
-        let btn = document.createElement('button');
-        btn.classList.add('close');
-        btn.innerHTML = '<span aria-hidden="true">&times;</span>';
-        btn.setAttribute('data-dismiss', 'modal');
-        header.appendChild(this.title);
-        header.appendChild(btn);
+        if(showTitle){
+            let header = document.createElement('div');
+            header.classList.add('modal-header');
+            inner.appendChild(header);
+            this.title = document.createElement('h3');
+            let btn = document.createElement('button');
+            btn.classList.add('close');
+            btn.innerHTML = '<span aria-hidden="true">&times;</span>';
+            btn.setAttribute('data-dismiss', 'modal');
+            header.appendChild(this.title);
+            header.appendChild(btn);
+        }
+
+        this.body = document.createElement('div');
+        this.body.classList.add('modal-body');
+        inner.appendChild(this.body);
+        if(content !== null){
+            this.body.appendChild(content);
+        }
         
-        let body = document.createElement('div');
-        body.classList.add('modal-body');
-        inner.appendChild(body);
-        body.appendChild(content);
-        
+        if(showFooter){
+            this.footer = document.createElement('div');
+            this.footer.classList.add('modal-footer');
+            inner.appendChild(this.footer);
+        }
+
         document.body.appendChild(modal);
         this.popup = modal;
         $(modal).modal({show: true, backdrop: true});
@@ -73,7 +92,7 @@ recit.filter.autolink.Popup = class {
 recit.filter.autolink.popupIframe = function(url, className){
     let content = document.createElement('iframe');
     content.src = url;
-    let popup = new recit.filter.autolink.Popup(content);
+    let popup = new recit.filter.autolink.Popup(content, true);
     if (className.length > 0){
         popup.popup.classList.add(className);
     }
@@ -96,3 +115,4 @@ recit.filter.autolink.popupIframe = function(url, className){
         popup.update();
     }
 }
+
