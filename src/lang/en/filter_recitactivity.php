@@ -52,3 +52,5 @@ $string['character_desc'] = 'Represents the separator character used in the filt
     <li>Link to H5P content: [[<b style="color:red">h5p/</b>Name of H5P]]</li>
     </ul>
 	';
+    $string['dismissMsg'] = 'Dismiss';
+    

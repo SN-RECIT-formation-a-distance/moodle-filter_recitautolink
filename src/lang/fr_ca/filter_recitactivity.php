@@ -52,3 +52,6 @@ $string['character_desc'] = 'Ceci repésente le caractère séparateur à utilis
     <li>Lien vers un contenu H5P : [[<b style="color:red">h5p/</b>Nom du H5P]]</li>
     </ul>
 	';
+
+    $string['dismissMsg'] = 'Ne plus afficher';
+    

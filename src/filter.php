@@ -690,8 +690,6 @@ class filter_recitactivity extends moodle_text_filter {
     }
 
     protected function filterOptionFeedback($complement, $param, $attributes, $match, &$result){
-        global $DB, $USER;
-
         $this->load_cm_completions();
         $activity = $this->get_course_activity($complement, $param, $attributes);
 
@@ -699,11 +697,6 @@ class filter_recitactivity extends moodle_text_filter {
             return;
         }
 
-        $info = new \core_availability\info_module($activity->cmInfo);
-
-        $str = "";
-        $isCmAvailable = $info->is_available($str, false, $USER->id);
-       
         $cmCompletion = $this->getCmCompletion($activity->cmInfo, $activity->completiondata);
 
         // cm is completed, nothing to display
@@ -713,49 +706,56 @@ class filter_recitactivity extends moodle_text_filter {
         }
 
         // cm is not available, nothing to display
-        if(!$isCmAvailable){ 
+        if(!$this->isCmAvailable($activity->cmInfo)){ 
             $result = str_replace($match, "", $result);
             return;
         }
 
-        if (!$cm = get_coursemodule_from_id('page', $activity->cmInfo->id)) {
-            throw new \moodle_exception('invalidcoursemodule');
-        }
-        $page = $DB->get_record('page', array('id'=>$cm->instance), '*', MUST_EXIST);      
-        
+        $pageContent = $this->getModulePageContent($activity->cmInfo);
+
         $dismissButton = "";
 
         // cm is not completed or has no completion option
         if($cmCompletion == 1){
-            $dismissButton = '<button class="btn btn-sm text-nowrap btn-link" data-action="toggle-manual-completion" data-toggletype="manual:mark-done" 
-            data-withavailability="1" data-cmid="'.$activity->cmInfo->id.'"  data-activityname="Ignorer"  
-            title="Ignorer cette notification"  aria-label="Ignorer cette notification">Ignorer cette notification</button>';           
+            $dismissButton = '<button class="btn btn-sm text-nowrap btn-outline-secondary m-2" data-action="toggle-manual-completion" data-toggletype="manual:mark-done" 
+            data-withavailability="1" data-cmid="'.$activity->cmInfo->id.'"  data-activityname="Ignore"  
+            title='.get_string('dismissMsg','filter_recitactivity').'  aria-label='.get_string('dismissMsg','filter_recitactivity').'>'.get_string('dismissMsg','filter_recitactivity').'</button>';           
         }
 
         if (isset($attributes['popup'])){
-            $result = str_replace($match, "<script>
-            window.addEventListener('load', function(){
-                let popup = new recit.filter.autolink.Popup(null, false, true, false);
-
-                let doc = new DOMParser().parseFromString(`$page->content`, 'text/html');
-                for(let node of doc.body.childNodes){
-                    popup.body.appendChild(node); 
-                }
-                
-                doc = new DOMParser().parseFromString(`$dismissButton`, 'text/html');
-                for(let node of doc.body.childNodes){
-                    popup.footer.appendChild(node); 
-                }
-                
-                popup.update();
-            }); 
-
-            </script>", $result);
+            $result = str_replace($match, "<div style='display:none' data-filter-recitactivity='feedback'><div>$pageContent</div><div>$dismissButton</div></div>", $result);
         }
-        else{
+        else{  
             $cssClasses = (isset($attributes['class']) ? $attributes['class'] : "");
-            $html = "<div class='$cssClasses'>$page->content $dismissButton</div>";
+            $html = "<div class='$cssClasses'>$pageContent $dismissButton</div>";
             $result = str_replace($match, $html, $result);
         }
+    }
+
+    protected function getModulePageContent(cm_info $cmInfo){
+        global $DB;
+
+        if (!$cm = get_coursemodule_from_id('page', $cmInfo->id)) {
+            throw new \moodle_exception('invalidcoursemodule');
+        }
+
+        $page = $DB->get_record('page', array('id'=>$cm->instance), '*', MUST_EXIST);
+        $context = context_module::instance($cm->id);
+        
+        $content = file_rewrite_pluginfile_urls($page->content, 'pluginfile.php', $context->id, 'mod_page', 'content', $page->revision);
+        $formatoptions = new stdClass; 
+        $formatoptions->noclean = true;
+        $formatoptions->overflowdiv = true;
+        $formatoptions->context = $context;
+        return format_text($content, $page->contentformat, $formatoptions);
+    }
+
+    protected function isCmAvailable(cm_info $cmInfo){
+        global $USER;
+
+        $info = new \core_availability\info_module($cmInfo);
+
+        $str = "";
+        return $info->is_available($str, false, $USER->id);
     }
 }
