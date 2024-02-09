@@ -44,9 +44,9 @@ class filter_recitactivity extends moodle_text_filter {
     /** @var array */
     protected $cmcompletions = array();
     /** @var array */
-    protected $modules = array();
-    /** @var array */
     protected $sectionslist = array();
+    /** @var array */
+    protected $cmdatalist = array();
     /** @var object */
     protected $page = null;
     /** @var object */
@@ -59,7 +59,8 @@ class filter_recitactivity extends moodle_text_filter {
     protected $courseid = 0;
     /** @var string */
     protected $DEFAULT_TARGET = '_self';
-
+    /** @var object */
+    protected $stats = null;
     /**
      * Setup function loads teachers and activities.
      *
@@ -69,7 +70,6 @@ class filter_recitactivity extends moodle_text_filter {
      * @param object $context
      */
     public function setup($page, $context) {
-        global $CFG;
         $this->context = $context;
         $this->page = $page;
 
@@ -82,16 +82,17 @@ class filter_recitactivity extends moodle_text_filter {
         if (!$coursectx) {
             return;
         }
+
         $this->courseid = $coursectx->instanceid;
         if($this->courseid <= 1){
             return;
         }
 
         $this->dao = filter_recitactivity_dao_factory::getInstance()->getDAO();
-        $this->modules = get_fast_modinfo($this->courseid);
-        $this->sectionslist = $this->modules->get_section_info_all();
 
         $this->load_course_teachers($this->courseid);
+        $this->load_data();
+        $this->setStats();
     }
 
     /**
@@ -121,52 +122,14 @@ class filter_recitactivity extends moodle_text_filter {
      *
      * @param string $name
      * @param array $options
+     * @return section_info
      */
-    protected function get_section($name, $options = array()){
-        global $CFG, $PAGE, $COURSE;
-
+    protected function getSectionByName($name){
         foreach ($this->sectionslist as $section) {
             $sectionname = (empty($section->name) ? strval($section->section) : format_string($section->name));            
 
             if ($sectionname == $name || get_string('section') . strval($section->section) == $name) {// Used for atto plugin, if no name, sectionX
-
-                $sectionname = (empty($section->name) ?  get_string('section') . ' ' . strval($section->section) : format_string($section->name));
-                $title = $sectionname;
-                if (isset($options['title'])) {
-                    $sectionname = $options['title'];
-                    $title = $sectionname.' - '.$name;
-                }
-                $class = '';
-                if (isset($options['class'])) {
-                    $class = $options['class'];
-                }
-                if (!isset($options['target'])) {
-                    $options['target'] = $this->DEFAULT_TARGET;
-                }
-                $anchor = sprintf("%s-%ld", strtolower(get_string('section')), $section->section);
-                
-                $isrestricted = (!$this->is_teacher) && !is_null($section->availability) && !$section->available;
-
-                $availableInfo = "";
-                if ($isrestricted) {
-                    $courseFormat = course_get_format($COURSE);
-                    $renderer = $courseFormat->get_renderer($PAGE);
-                    $infoMsg = $renderer->section_availability($section);
-                    $infoMsg = htmlspecialchars($infoMsg);
-                    
-                    $availableInfo = sprintf("<button type='button' class='btn btn-sm btn-link' data-html='true' title='%s' data-container='body' data-toggle='popover' data-placement='bottom' data-content=\"%s\">", get_string('restricted'), $infoMsg);
-                    $availableInfo .= "<i class='fa fa-info-circle'></i>";
-                    $availableInfo .= "</button>";
-                    $class .= " disabled";
-                }
-                
-                $tagattr = array('class' => 'autolink '.$class, 'title' => $title, 'target' => $options['target'], 'onclick' => 'this.search == document.location.search && setTimeout(location.reload.bind(location), 50)');
-                $href = "#";
-                $href = new moodle_url('/course/view.php', array('id' => $this->page->course->id, 'section' => $section->section), $anchor);
-                
-                $result = html_writer::link($href, $sectionname, $tagattr);
-
-                return "<span>$result$availableInfo</span>";
+                return $section;
             }
         }
 
@@ -176,7 +139,7 @@ class filter_recitactivity extends moodle_text_filter {
     /**
      * This function loads module completion
      */
-    protected function load_cm_completions() {
+    protected function load_cm_completions() { 
         if(count($this->cmcompletions) > 0){
             return;
         }
@@ -185,27 +148,27 @@ class filter_recitactivity extends moodle_text_filter {
     }
 
     /**
-     * Get array variable course activities list
+     * Load course modules list
      * 
-     * @param string $activityname
-     * @param string $param
-     * @param array $options
      */
-    protected function load_course_activities_list($activityname, $param = '', $options = array()) {
+    protected function load_data() {
         global $USER;
 
-        if (empty($this->modules->cms)) {
+        $modules = get_fast_modinfo($this->courseid);
+
+        $this->cmdatalist = array();
+
+        if (empty($modules->cms)) {
             return null;
         }
+
+        $this->sectionslist = $modules->get_section_info_all();
+        $this->load_cm_completions();
+
         $avoidModules = array("label");
 
-        foreach ($this->modules->cms as $cm) {
+        foreach ($modules->cms as $cm) {
             if (in_array($cm->__get('modname'), $avoidModules)) {
-                continue;
-            }
-
-            // load only the wanted activity
-            if ($activityname != $cm->__get('name')) {
                 continue;
             }
 
@@ -213,151 +176,147 @@ class filter_recitactivity extends moodle_text_filter {
                 continue;
             }
 
-            $name = s(trim(strip_tags($cm->__get('name'))));
-            $title = $name;
-            if (isset($options['title'])) {
-                $title = $options['title'];
-            }
-            $class = '';
-            if (isset($options['class'])) {
-                $class = $options['class'];
-            }
-            $currentname = trim($cm->__get('name'));
-
             // Avoid empty or unlinkable activity names.
-            if (empty($name) || ($cm->deletioninprogress == 1)) {
+            $rawname = s(trim(strip_tags($cm->__get('name'))));
+            if (empty($rawname) || ($cm->deletioninprogress == 1)) {
                 continue;
-            }
+            }            
+
+            $cmData = new stdClass();
+            $cmData->rawname = $rawname;
+            $cmData->currentname = trim($cm->__get('name'));
+            $cmData->cmInfo = $cm;
 
             // Row not present counts as 'not complete'
-            $completiondata = new stdClass();
-            $completiondata->id = 0;
-            $completiondata->coursemoduleid = $cm->__get('id');
-            $completiondata->userid = $USER->id;
-            $completiondata->completionstate = 0;
-            $completiondata->viewed = 0;
-            $completiondata->overrideby = null;
-            $completiondata->timemodified = 0;           
+            $cmData->completion = new stdClass();
+            $cmData->completion->id = 0;
+            $cmData->completion->coursemoduleid = $cm->__get('id');
+            $cmData->completion->userid = $USER->id;
+            $cmData->completion->completionstate = 0;
+            $cmData->completion->viewed = 0;
+            $cmData->completion->overrideby = null;
+            $cmData->completion->timemodified = 0;           
 
             if (isset($this->cmcompletions[$cm->__get('id')])) {
-                $completiondata = $this->cmcompletions[$cm->__get('id')];
+                $cmData->completion = $this->cmcompletions[$cm->__get('id')];
             }
 
-            $cmcompletion = $this->getCmCompletionCheckbox($cm, $completiondata);
-            $isrestricted = (!$cm->__get('uservisible') || !empty($cm->availableinfo) || ($cm->__get('visible') == 0));
+            $cmData->isrestricted = (!$cm->__get('uservisible') || !empty($cm->availableinfo) || ($cm->__get('visible') == 0));
             if ($this->is_teacher) {
-                $isrestricted = false;
+                $cmData->isrestricted = false;
             }
 
-            $options['cmcompletion'] = $cmcompletion;
-            $cmname = $this->get_cm_name($cm, $options);
+            $this->cmdatalist[] = $cmData;
+        }
+    }
 
-            $courseactivity = new stdClass();
-            $courseactivity->cmname = $cmname;
-            $courseactivity->currentname = $currentname;
-            $courseactivity->cmcompletion = $cmcompletion;
-            $courseactivity->id = $cm->__get('id');
-            $courseactivity->uservisible = $cm->uservisible;
-            $courseactivity->cmInfo = $cm;
-            $courseactivity->completiondata = $completiondata;
+    protected function setStats(){
+        $this->stats = new stdClass();
+        $this->stats->section = array();
+        $this->stats->course = new stdClass();
+        $this->stats->course->nbCmTotal = 0;
+        $this->stats->course->nbCmCompleted = 0;
 
-            if ($isrestricted) {
-                $courseactivity->href_tag_begin = html_writer::start_tag('a', array('class' => "$class disabled ",
-                    'title' => $title, 'href' => '#'));
-                $courseactivity->href_tag_end = '</a>';
-
-                $messageRestricted = "";
-                if ($cm->availableinfo){
-                    $messageRestricted = htmlspecialchars(\core_availability\info::format_info($cm->availableinfo, $this->page->course->id));
-                }
-                else if ($cm->__get('visible') == 0) {
-                    $messageRestricted = get_string('hiddenfromstudents');
-                }
-                
-                if (strlen($messageRestricted) > 0) {
-                    $courseactivity->href_tag_end .= "<button type='button' class='btn btn-sm btn-link' data-html='true' data-container='body' title='".get_string('restricted')."' data-toggle='popover' data-placement='bottom' data-content=\"$messageRestricted\">";
-                    $courseactivity->href_tag_end .= "<i class='fa fa-info-circle'></i>";
-                    $courseactivity->href_tag_end .= "</button>";
-                }
-                
-                $courseactivity->cmname = "<a class='disabled' href='#'>$title</a>";
-                $courseactivity->cmcompletion = "";
-            }
-            else{
-                $tagattr = array('class' => 'autolink '.$class, 'title' => $title, 'href' => $cm->__get('url'), 'target' => $options['target']);
-                if (isset($options['popup'])){
-                    $tagattr['href'] = 'javascript:recit.filter.autolink.popupIframe("'.$tagattr['href'].'&autolinkpopup=1", "'.$options['popupclass'].'");';
-                }
-                $courseactivity->href_tag_begin = html_writer::start_tag('a', $tagattr);
-                $courseactivity->href_tag_end = '</a>';
+        foreach($this->cmdatalist as $item) {
+            if(!isset($this->stats->section[$item->cmInfo->section])){
+                $this->stats->section[$item->cmInfo->section] = new stdClass();
+                $this->stats->section[$item->cmInfo->section]->nbCmTotal = 0;
+                $this->stats->section[$item->cmInfo->section]->nbCmCompleted = 0;
             }
 
-            return $courseactivity;
+            $this->stats->section[$item->cmInfo->section]->nbCmTotal++;
+            $this->stats->course->nbCmTotal++;
+
+            if($this->getCmCompletion($item->cmInfo, $item->completion) == 2){
+                $this->stats->section[$item->cmInfo->section]->nbCmCompleted++;
+                $this->stats->course->nbCmCompleted++;
+            }
+        }
+    }
+
+    protected function getCmData($name){
+        foreach($this->cmdatalist as $item) {
+            if ($name == $item->cmInfo->__get('name')) {
+                return $item;
+            }
         }
 
         return null;
     }
-
-    /**
-     * This function gets course module name
-     *
-     * @param cm_info $mod
-     * @param array $options
-     */
-    protected function get_cm_name(cm_info $mod, $options = array()) {
-        $output = '';
-        $url = $mod->__get('url');
+    
+    protected function get_autolink($cmdata, $options = array()) {
+        $url = $cmdata->cmInfo->__get('url');
         //if (!$mod->is_visible_on_course_page() || !$url) {
         if (!$url) {
             // Nothing to be displayed to the user.
-            return $output;
+            return "";
         }
 
         //Accessibility: for files get description via icon, this is very ugly hack!
-        $instancename = $mod->__get('name'); //$mod->get_formatted_name();
-        $altname = $mod->__get('modfullname');
+        $instancename = $cmdata->cmInfo->__get('name'); //$mod->get_formatted_name();
         
         $title = $instancename;
-        if (isset($options['title'])) $title = $options['title'];
+        if (isset($options['title'])){
+            $title = $options['title'];
+        } 
+
         $class = '';
-        if (isset($options['class'])) $class = $options['class'];
-        if (!isset($options['target'])) $options['target'] = $this->DEFAULT_TARGET; 
-        // Avoid unnecessary duplication: if e.g. a forum name already
-        // includes the word forum (or Forum, etc) then it is unhelpful
-        // to include that in the accessible description that is added.
-        if (false !== strpos(core_text::strtolower($instancename),
-                core_text::strtolower($altname))) {
-            $altname = '';
+        if (isset($options['class'])){
+            $class = $options['class'];
+        } 
+
+        if (!isset($options['target'])){
+            $options['target'] = $this->DEFAULT_TARGET; 
+        } 
+
+
+        $activityicon = "";
+        if(isset($options['icon']) && $options['icon'] == true){
+            $activityicon = html_writer::empty_tag('img', array('src' => $cmdata->cmInfo->get_icon_url(), 'class' => 'iconlarge activityicon', 'alt' => '', 
+            'role' => 'presentation', 'aria-hidden' => 'true'));
         }
-        // File type after name, for alphabetic lists (screen reader).
-        if ($altname) {
-            $altname = get_accesshide(' '.$altname);
+        
+        $restrictioninfo = "";
+
+        if ($cmdata->isrestricted) {
+            $attributes = array('class' => 'disabled '.$class, 'title' => $title);
+
+            $messageRestricted = "";
+            if ($cmdata->cmInfo->availableinfo){
+                $messageRestricted = htmlspecialchars(\core_availability\info::format_info($cmdata->cmInfo->availableinfo, $this->page->course->id));
+            }
+            else if ($cmdata->cmInfo->__get('visible') == 0) {
+                $messageRestricted = get_string('hiddenfromstudents');
+            }
+            
+            if (strlen($messageRestricted) > 0) {
+                $restrictioninfo .= "<button type='button' class='btn btn-sm btn-link' data-html='true' data-container='body' title='".get_string('restricted')."' data-toggle='popover' data-placement='bottom' data-content=\"$messageRestricted\">";
+                $restrictioninfo .= "<i class='fa fa-info-circle'></i>";
+                $restrictioninfo .= "</button>";
+            }
+        }
+        else{
+            if (isset($options['popup'])){
+                $url = 'javascript:recit.filter.autolink.popupIframe("'.$url.'&autolinkpopup=1", "'.$options['popupclass'].'");';
+            }
+    
+            if (isset($options['completion']) && ($options['completion'] == true)){
+                $activityicon = $options['cmcompletion'].' '.$activityicon;
+            }
+
+            $attributes = array('class' => 'autolink '.$class, 'title' => $title, 'href' => $url, 'target' => $options['target']);
         }
 
         // Get on-click attribute value if specified and decode the onclick - it
         // has already been encoded for display (puke).
-        $onclick = htmlspecialchars_decode($mod->__get('onclick'), ENT_QUOTES);
-
-        // Display link itself.
-        $activitylink = html_writer::empty_tag('img', array('src' => $mod->get_icon_url(), 'class' => 'iconlarge activityicon', 'alt' => '', 'role' => 'presentation', 'aria-hidden' => 'true')) . html_writer::tag('span', $title, array('class' => 'instancename'));
-        if ($mod->__get('uservisible')) {
-            if (isset($options['popup'])){
-                $url = 'javascript:recit.filter.autolink.popupIframe("'.$url.'&autolinkpopup=1", "'.$options['popupclass'].'");';
-            }
-            if (isset($options['completion'])){
-                $activitylink = $options['cmcompletion'].' '.$activitylink;
-            }
-            $attributes = array('class' => 'autolink '.$class, 'title' => $title, 'href' => $url, 'target' => $options['target']);
-            if (!empty($onclick)){
-                $attributes['onclick'] = $onclick;
-            }
-            $output .= html_writer::tag('a', $activitylink, $attributes);
-        } else {
-            // We may be displaying this just in order to show information
-            // about visibility, without the actual link ($mod->is_visible_on_course_page()).
-            $output .= html_writer::tag('div', $activitylink);
+        $onclick = htmlspecialchars_decode($cmdata->cmInfo->__get('onclick'), ENT_QUOTES);
+        if (!empty($onclick)){
+            $attributes['onclick'] = $onclick;
         }
-        return $output;
+
+        $activityName = html_writer::tag('span', $title, array('class' => 'instancename'));
+
+        return html_writer::tag('a', $activityicon . $activityName . $restrictioninfo, $attributes);
     }
 
     /**
@@ -366,10 +325,44 @@ class filter_recitactivity extends moodle_text_filter {
      * @param string $name
      * @param string $param
      * @param array $options
-     * @return $item from array course activities list|null
+     * @return object $result
      */
-    protected function get_course_activity($name, $param = '', $options = array()) {
-        return $this->load_course_activities_list($name, $param, $options);
+    protected function get_course_activity($name, $options = array()) {
+        $cmData = $this->getCmData($name);
+
+        if($cmData == null){
+            return null;
+        }
+
+        $result = new stdClass();
+        $result->cmData = $cmData; 
+        $result->output = new stdClass();
+        $result->output->state = true;
+
+        $title = $result->cmData->rawname;
+        if (isset($options['title'])) {
+            $title = $options['title'];
+        }
+
+        $class = '';
+        if (isset($options['class'])) {
+            $class = $options['class'];
+        }
+
+        if (isset($options['roles'])) {
+            if(!$this->validateUserRoles($options['roles'])){
+                $result->output->state = false;
+                return $result;
+            }
+        }
+           
+        //$currentname = trim($cm->__get('name'));
+        $result->output->cmcompletion = $this->getCmCompletionCheckbox($result->cmData->cmInfo, $result->cmData->completion);
+        $options['cmcompletion'] = $result->output->cmcompletion;
+        
+        $result->output->autolink = $this->get_autolink($result->cmData, $options);        
+
+        return $result;
     }
 
     /**
@@ -381,8 +374,6 @@ class filter_recitactivity extends moodle_text_filter {
      * @param array $options
      */
     public function filter($text, array $options = array()) {
-        global $USER, $OUTPUT, $COURSE;
-
         // This filter is only applied where the courseId is greater than 1, it means, a real course.
         if ($this->courseid <= 1) {
             return $text;
@@ -451,8 +442,16 @@ class filter_recitactivity extends moodle_text_filter {
                     $attributes['target'] = '_blank';
                     unset($items[$i]);
                 }
+                
+                 // In case of /role:role1,role2
+                preg_match('/roles:[a-zA-Z,]+/', $param, $optionRoles, PREG_OFFSET_CAPTURE); 
+               
+                if(count($optionRoles) > 0){
+                    $optionRoles = substr($optionRoles[0][0], 6, strlen($optionRoles[0][0]));
+                    $attributes['roles'] = explode(",", $optionRoles);
+                    unset($items[$i]);
+                }
             }
-
 
             // In case of "[[ActivityName]]"
             if (count($items) == 1 && isset($items[0]) && strpos($items[0], '[[') !== false) {
@@ -466,91 +465,45 @@ class filter_recitactivity extends moodle_text_filter {
                 $param = str_replace("[[", "", implode("", $items));
             }
 
-            switch ($param) {
+            switch ($param) { 
                 case "i":
-                    $activity = $this->get_course_activity($complement, $param, $attributes);
-                    if ($activity != null) {
-                        $url = $activity->cmname;
-                        $result = str_replace($match, $url, $result);
-                    }
+                    $attributes['completion'] = false;
+                    $attributes['icon'] = true;
+                    $this->filterOptionLink($complement, $attributes, $match, $result);
                     break;
                 case "c":
-                    $this->load_cm_completions();
-                    $activity = $this->get_course_activity($complement, $param, $attributes);
-                    if ($activity != null) {
-                        $title = $activity->currentname;
-                        if (isset($attributes['title'])) $title = $attributes['title'];
-                        $result = str_replace($match, sprintf("%s %s %s %s",
-                                $activity->href_tag_begin, $activity->cmcompletion, $title, $activity->href_tag_end), $result);
-                    }
+                    $attributes['completion'] = true;
+                    $attributes['icon'] = false;
+                    $this->filterOptionLink($complement, $attributes, $match, $result);
                     break;
                 case "ci":
                 case "ic":
-                    $this->load_cm_completions();
                     $attributes['completion'] = true;
-                    $activity = $this->get_course_activity($complement, $param, $attributes);
-                    if ($activity != null) {
-                        $result = str_replace($match, $activity->cmname, $result);
-                    }
+                    $attributes['icon'] = true;
+                    $this->filterOptionLink($complement, $attributes, $match, $result);
                     break;
                 case "l":
-                    $activity = $this->get_course_activity($complement, $param, $attributes);
-                    if ($activity != null) {
-                        $title = $activity->currentname;
-                        if (isset($attributes['title'])) $title = $attributes['title'];
-                        $result = str_replace($match, sprintf("%s%s%s", $activity->href_tag_begin, $title,
-                                $activity->href_tag_end), $result);
-                    }
+                    $attributes['completion'] = false;
+                    $attributes['icon'] = false;
+                    $this->filterOptionLink($complement, $attributes, $match, $result);
                     break;
                 case "s":
-                    $link = $this->get_section($complement, $attributes);
-                    if ($link != null) {
-                        $result = str_replace($match, $link, $result);
-                    }
+                    $this->filterOptionSectionLink($complement, $attributes, $match, $result);
+                    break;
+                case "spb":
+                    $this->filterOptionSectionProgressBar($complement, $attributes, $match, $result);
+                    break;
+                case "cpb":
+                    $this->filterOptionCourseProgressBar($attributes, $match, $result);
                     break;
                 case "h5p":
-                    $h5p = $this->getH5PFromName($complement);
-                    if ($h5p){
-                        $result = str_replace($match, $h5p, $result);
-                    }
+                    $this->filterOptionH5P($complement, $match, $result);
                     break;
                 case "d":
-                    if ($complement == "user.firstname") {
-                        $result = str_replace($match, $USER->firstname, $result);
-                    } else if ($complement == "user.lastname") {
-                        $result = str_replace($match, $USER->lastname, $result);
-                    } else if ($complement == "user.email") {
-                        $result = str_replace($match, $USER->email, $result);
-                    } else if ($complement == "user.picture") {
-                        $picture = $OUTPUT->user_picture($USER, array('courseid' => $this->page->course->id, 'link' => false));
-                        $result = str_replace($match, $picture, $result);
-                    } else if ($complement == "course.shortname") {
-                        $result = str_replace($match, $COURSE->shortname, $result);
-                    } else if ($complement == "course.fullname") {
-                        $result = str_replace($match, $COURSE->fullname, $result);
-                    } else {
-                        if (empty($this->teacherslist) && substr($complement, 0, 8) == "teacher1"){                            
-                            $result = str_replace($match, "($match <button type='button' class='btn btn-sm btn-link' data-html='true' title='' data-container='body' data-toggle='popover' data-placement='bottom' 
-                                                                    data-content='".get_string('noteacheringroup','filter_recitactivity')."' data-original-title=''><i class='fa fa-info-circle'></i></button></button>", $result);
-                        }
-                        foreach ($this->teacherslist as $index => $teacher) {
-                            $nb = $index + 1;
-                            if ($complement == "teacher$nb.firstname") {
-                                $result = str_replace($match, $teacher->firstname, $result);
-                            } else if ($complement == "teacher$nb.lastname") {
-                                $result = str_replace($match, $teacher->lastname, $result);
-                            } else if ($complement == "teacher$nb.email") {
-                                $result = str_replace($match, $teacher->email, $result);
-                            } else if ($complement == "teacher$nb.picture") {
-                                $picture = $OUTPUT->user_picture($teacher, array('courseid' => $this->page->course->id,
-                                    'link' => false));
-                                $result = str_replace($match, $picture, $result);
-                            }
-                        }
-                    }
+                    $this->filterOptionUserData($complement, $match, $result);
                     break;
-                case "f":
-                    $this->filterOptionFeedback($complement, $param, $attributes, $match, $result);   
+                case "f": 
+                    $this->filterOptionFeedback($complement, $attributes, $match, $result);   
                     break;
             }
         }
@@ -558,26 +511,20 @@ class filter_recitactivity extends moodle_text_filter {
         return $result;
     }
 
-    /**
-     * Extract h5p by name.
-     *
-     * @param string $name
-     */
-    public function getH5PFromName($name){
-        global $PAGE;
-        // Return all content bank content that matches the search criteria and can be viewed/accessed by the user.
-        $coursecontext = \context_course::instance($PAGE->course->id);
-        $list = $this->get_h5p_search_contents($name, $coursecontext->id);
-        if (!isset($list[0])) {
-            return;
-        }
-        $h5p = $list[0];
-        $source = json_decode(base64_decode($h5p['source']));
-        autoloader::register();
+    protected function validateUserRoles($roles){
+        global $USER;
 
-        $url = \moodle_url::make_pluginfile_url($source->contextid, 'contentbank', 'public', $source->itemid.'/'. $source->filename, null, null);
-        $url = $url->out();
-        return "<div class='h5p-placeholder' contenteditable='false'>$url</div>";
+        $coursecontext = \context_course::instance($this->page->course->id);
+        
+        $userRoles = get_user_roles($coursecontext, $USER->id);
+
+        foreach($userRoles as $role){
+            if(in_array($role->shortname, $roles)){
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -689,15 +636,137 @@ class filter_recitactivity extends moodle_text_filter {
         return sprintf("<img %s style='width: 16px; height: 16px;'/>", implode(" ", $attrs));
     }
 
-    protected function filterOptionFeedback($complement, $param, $attributes, $match, &$result){
-        $this->load_cm_completions();
-        $activity = $this->get_course_activity($complement, $param, $attributes);
+    protected function shouldHideIntCode($activity, $match, &$result){
+        if(!$activity->output->state){
+            $result = str_replace($match, "", $result);
+            return true;
+        }
 
-        if($activity == null){
+        return false;
+    }
+
+    protected function filterOptionLink($complement, $attributes, $match, &$result){
+        $activity = $this->get_course_activity($complement, $attributes);
+        if ($activity != null) {
+            if(!$this->shouldHideIntCode($activity, $match, $result)){
+                $result = str_replace($match, $activity->output->autolink, $result);
+            }
+        }
+    }
+
+    protected function filterOptionSectionLink($name, $options, $match, &$result){
+        global $PAGE, $COURSE;
+
+        $section = $this->getSectionByName($name);
+
+        if($section == null){
             return;
         }
 
-        $cmCompletion = $this->getCmCompletion($activity->cmInfo, $activity->completiondata);
+        $sectionname = (empty($section->name) ?  get_string('section') . ' ' . strval($section->section) : format_string($section->name));
+        $title = $sectionname;
+        if (isset($options['title'])) {
+            $sectionname = $options['title'];
+            $title = $sectionname.' - '.$name;
+        }
+
+        $class = '';
+        if (isset($options['class'])) {
+            $class = $options['class'];
+        }
+        if (!isset($options['target'])) {
+            $options['target'] = $this->DEFAULT_TARGET;
+        }
+        $anchor = sprintf("%s-%ld", strtolower(get_string('section')), $section->section);
+        
+        $isrestricted = (!$this->is_teacher) && !is_null($section->availability) && !$section->available;
+
+        $availableInfo = "";
+        if ($isrestricted) {
+            $courseFormat = course_get_format($COURSE);
+            $renderer = $courseFormat->get_renderer($PAGE);
+            $infoMsg = $renderer->section_availability($section);
+            $infoMsg = htmlspecialchars($infoMsg);
+            
+            $availableInfo = sprintf("<button type='button' class='btn btn-sm btn-link' data-html='true' title='%s' data-container='body' data-toggle='popover' data-placement='bottom' data-content=\"%s\">", get_string('restricted'), $infoMsg);
+            $availableInfo .= "<i class='fa fa-info-circle'></i>";
+            $availableInfo .= "</button>";
+            $class .= " disabled";
+        }
+        
+        $tagattr = array('class' => 'autolink '.$class, 'title' => $title, 'target' => $options['target'], 'onclick' => 'this.search == document.location.search && setTimeout(location.reload.bind(location), 50)');
+        $href = "#";
+        $href = new moodle_url('/course/view.php', array('id' => $this->page->course->id, 'section' => $section->section), $anchor);
+        
+        $link = html_writer::link($href, $sectionname, $tagattr);
+        
+        $result = str_replace($match, "<span>$link$availableInfo</span>", $result);
+    }
+
+    protected function filterOptionH5P($name, $match, &$result){
+        // Return all content bank content that matches the search criteria and can be viewed/accessed by the user.
+        $coursecontext = \context_course::instance($this->page->course->id);
+        $list = $this->get_h5p_search_contents($name, $coursecontext->id);
+        if (!isset($list[0])) {
+            return;
+        }
+
+        $h5p = $list[0];
+        $source = json_decode(base64_decode($h5p['source']));
+        autoloader::register();
+
+        $url = \moodle_url::make_pluginfile_url($source->contextid, 'contentbank', 'public', $source->itemid.'/'. $source->filename, null, null);
+        $url = $url->out();
+        $h5p = "<div class='h5p-placeholder' contenteditable='false'>$url</div>";
+        $result = str_replace($match, $h5p, $result);
+    }
+
+    protected function filterOptionUserData($complement, $match, &$result){
+        global $USER, $OUTPUT, $COURSE;
+
+        if ($complement == "user.firstname") {
+            $result = str_replace($match, $USER->firstname, $result);
+        } else if ($complement == "user.lastname") {
+            $result = str_replace($match, $USER->lastname, $result);
+        } else if ($complement == "user.email") {
+            $result = str_replace($match, $USER->email, $result);
+        } else if ($complement == "user.picture") {
+            $picture = $OUTPUT->user_picture($USER, array('courseid' => $this->page->course->id, 'link' => false));
+            $result = str_replace($match, $picture, $result);
+        } else if ($complement == "course.shortname") {
+            $result = str_replace($match, $COURSE->shortname, $result);
+        } else if ($complement == "course.fullname") {
+            $result = str_replace($match, $COURSE->fullname, $result);
+        } else {
+            if (empty($this->teacherslist) && substr($complement, 0, 8) == "teacher1"){                            
+                $result = str_replace($match, "($match <button type='button' class='btn btn-sm btn-link' data-html='true' title='' data-container='body' data-toggle='popover' data-placement='bottom' 
+                                                        data-content='".get_string('noteacheringroup','filter_recitactivity')."' data-original-title=''><i class='fa fa-info-circle'></i></button></button>", $result);
+            }
+            foreach ($this->teacherslist as $index => $teacher) {
+                $nb = $index + 1;
+                if ($complement == "teacher$nb.firstname") {
+                    $result = str_replace($match, $teacher->firstname, $result);
+                } else if ($complement == "teacher$nb.lastname") {
+                    $result = str_replace($match, $teacher->lastname, $result);
+                } else if ($complement == "teacher$nb.email") {
+                    $result = str_replace($match, $teacher->email, $result);
+                } else if ($complement == "teacher$nb.picture") {
+                    $picture = $OUTPUT->user_picture($teacher, array('courseid' => $this->page->course->id,
+                        'link' => false));
+                    $result = str_replace($match, $picture, $result);
+                }
+            }
+        }
+    }
+
+    protected function filterOptionFeedback($complement, $attributes, $match, &$result){        
+        $cmData = $this->getCmData($complement);
+
+        if($cmData == null){
+            return;
+        }
+
+        $cmCompletion = $this->getCmCompletion($cmData->cmInfo, $cmData->completion);
 
         // cm is completed, nothing to display
         if($cmCompletion == 2){
@@ -706,20 +775,20 @@ class filter_recitactivity extends moodle_text_filter {
         }
 
         // cm is not available, nothing to display
-        if(!$this->isCmAvailable($activity->cmInfo)){ 
+        if(!$this->isCmAvailable($cmData->cmInfo)){ 
             $result = str_replace($match, "", $result);
             return;
         }
 
-        $pageContent = $this->getModulePageContent($activity->cmInfo);
+        $pageContent = $this->getModulePageContent($cmData->cmInfo);
 
         $dismissButton = "";
 
         // cm is not completed or has no completion option
         if($cmCompletion == 1){
-            $dismissButton = '<button class="btn btn-sm text-nowrap btn-outline-secondary m-2" data-action="toggle-manual-completion" data-toggletype="manual:mark-done" 
-            data-withavailability="1" data-cmid="'.$activity->cmInfo->id.'"  data-activityname="Ignore"  
-            title='.get_string('dismissMsg','filter_recitactivity').'  aria-label='.get_string('dismissMsg','filter_recitactivity').'>'.get_string('dismissMsg','filter_recitactivity').'</button>';           
+            $dismissButton = '<div class="d-flex justify-content-end"><button class="btn btn-sm text-nowrap btn-outline-secondary m-2" data-action="toggle-manual-completion" data-toggletype="manual:mark-done" 
+            data-withavailability="1" data-cmid="'.$cmData->cmInfo->id.'"  data-activityname="Ignore"  
+            title='.get_string('dismissMsg','filter_recitactivity').'  aria-label='.get_string('dismissMsg','filter_recitactivity').'>'.get_string('dismissMsg','filter_recitactivity').'</button></div>';           
         }
 
         if (isset($attributes['popup'])){
@@ -730,6 +799,50 @@ class filter_recitactivity extends moodle_text_filter {
             $html = "<div class='$cssClasses'>$pageContent $dismissButton</div>";
             $result = str_replace($match, $html, $result);
         }
+    }
+
+    protected function filterOptionSectionProgressBar($complement, $attributes, $match, &$result){
+        $section = $this->getSectionByName($complement);
+
+        if($section == null){
+            return;
+        }
+
+        if(($this->stats == null) || (!isset($this->stats->section[$section->id]))){
+            return;
+        }
+
+        $sectionPct = round($this->stats->section[$section->id]->nbCmCompleted / $this->stats->section[$section->id]->nbCmTotal * 100);
+
+        $cssClasses = (isset($attributes['class']) ? $attributes['class'] : "");
+        $html = 
+            "<div class=' $cssClasses'>
+                <div class='progress'>
+                    <div class='progress-bar progress-bar-striped' role='progressbar' style='width: $sectionPct%' aria-valuenow='$sectionPct' 
+                    aria-valuemin='0' aria-valuemax='100'>$sectionPct%</div>
+                </div>
+            </div>";
+
+        $result = str_replace($match, $html, $result);
+    }
+
+    protected function filterOptionCourseProgressBar($attributes, $match, &$result){
+        if($this->stats == null){
+            return;
+        }
+
+        $pct = round($this->stats->course->nbCmCompleted / $this->stats->course->nbCmTotal * 100,0);
+
+        $cssClasses = (isset($attributes['class']) ? $attributes['class'] : "");
+        $html = 
+            "<div class=' $cssClasses'>
+                <div class='progress'>
+                    <div class='progress-bar progress-bar-striped' role='progressbar' style='width: $pct%' aria-valuenow='$pct' 
+                    aria-valuemin='0' aria-valuemax='100'>$pct%</div>
+                </div>
+            </div>";
+
+        $result = str_replace($match, $html, $result);
     }
 
     protected function getModulePageContent(cm_info $cmInfo){

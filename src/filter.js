@@ -138,12 +138,12 @@ function filter_recitactivity_init_vars(_, settings){
             }
         }
         else if(counter >= 3){
-            console.log("filter_recitactivity JS finished.");
+            console.log("filter_recitactivity JS loaded.");
         }
         else{
             counter++;
             window.setTimeout(timer, 500);
-            console.log("filter_recitactivity JS starting...");
+            //console.log("filter_recitactivity JS starting...");
         }
     }
     window.setTimeout(timer, 500);
