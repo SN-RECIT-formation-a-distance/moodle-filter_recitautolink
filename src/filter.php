@@ -61,6 +61,10 @@ class filter_recitactivity extends moodle_text_filter {
     protected $DEFAULT_TARGET = '_self';
     /** @var object */
     protected $stats = null;
+
+    protected const NO_COMPLETION = 0;
+    protected const COMPLETION_NOT_COMPLETED = 1;
+    protected const COMPLETION_COMPLETED = 2;
     /**
      * Setup function loads teachers and activities.
      *
@@ -218,6 +222,12 @@ class filter_recitactivity extends moodle_text_filter {
         $this->stats->course->nbCmCompleted = 0;
 
         foreach($this->cmdatalist as $item) {
+            $completion = $this->getCmCompletion($item->cmInfo, $item->completion);
+
+            if($completion == self::NO_COMPLETION){
+                continue;
+            }
+
             if(!isset($this->stats->section[$item->cmInfo->section])){
                 $this->stats->section[$item->cmInfo->section] = new stdClass();
                 $this->stats->section[$item->cmInfo->section]->nbCmTotal = 0;
@@ -227,7 +237,7 @@ class filter_recitactivity extends moodle_text_filter {
             $this->stats->section[$item->cmInfo->section]->nbCmTotal++;
             $this->stats->course->nbCmTotal++;
 
-            if($this->getCmCompletion($item->cmInfo, $item->completion) == 2){
+            if($completion == self::COMPLETION_COMPLETED){
                 $this->stats->section[$item->cmInfo->section]->nbCmCompleted++;
                 $this->stats->course->nbCmCompleted++;
             }
@@ -268,7 +278,6 @@ class filter_recitactivity extends moodle_text_filter {
         if (!isset($options['target'])){
             $options['target'] = $this->DEFAULT_TARGET; 
         } 
-
 
         $activityicon = "";
         if(isset($options['icon']) && $options['icon'] == true){
@@ -316,7 +325,8 @@ class filter_recitactivity extends moodle_text_filter {
 
         $activityName = html_writer::tag('span', $title, array('class' => 'instancename'));
 
-        return html_writer::tag('a', $activityicon . $activityName . $restrictioninfo, $attributes);
+        $autolink = html_writer::tag('a', $activityicon . $activityName, $attributes);
+        return html_writer::tag('span', $autolink . $restrictioninfo);
     }
 
     /**
@@ -338,16 +348,6 @@ class filter_recitactivity extends moodle_text_filter {
         $result->cmData = $cmData; 
         $result->output = new stdClass();
         $result->output->state = true;
-
-        $title = $result->cmData->rawname;
-        if (isset($options['title'])) {
-            $title = $options['title'];
-        }
-
-        $class = '';
-        if (isset($options['class'])) {
-            $class = $options['class'];
-        }
 
         if (isset($options['roles'])) {
             if(!$this->validateUserRoles($options['roles'])){
@@ -610,8 +610,8 @@ class filter_recitactivity extends moodle_text_filter {
         }
 
         $cmCompletion = $this->getCmCompletion($mod, $completiondata);
-        if($cmCompletion != 0){
-            $completionicon = ($cmCompletion == 2 ? 'fa-check-square-o' : 'fa-square-o');
+        if($cmCompletion != self::NO_COMPLETION){
+            $completionicon = ($cmCompletion == self::COMPLETION_COMPLETED ? 'fa-check-square-o' : 'fa-square-o');
             $output .= "<i class='fa $completionicon'></i>";
         }
 
@@ -769,7 +769,7 @@ class filter_recitactivity extends moodle_text_filter {
         $cmCompletion = $this->getCmCompletion($cmData->cmInfo, $cmData->completion);
 
         // cm is completed, nothing to display
-        if($cmCompletion == 2){
+        if($cmCompletion == self::COMPLETION_COMPLETED){
             $result = str_replace($match, "", $result);
             return;
         }
@@ -785,7 +785,7 @@ class filter_recitactivity extends moodle_text_filter {
         $dismissButton = "";
 
         // cm is not completed or has no completion option
-        if($cmCompletion == 1){
+        if($cmCompletion == self::COMPLETION_NOT_COMPLETED){
             $dismissButton = '<div class="d-flex justify-content-end"><button class="btn btn-sm text-nowrap btn-outline-secondary m-2" data-action="toggle-manual-completion" data-toggletype="manual:mark-done" 
             data-withavailability="1" data-cmid="'.$cmData->cmInfo->id.'"  data-activityname="Ignore"  
             title='.get_string('dismissMsg','filter_recitactivity').'  aria-label='.get_string('dismissMsg','filter_recitactivity').'>'.get_string('dismissMsg','filter_recitactivity').'</button></div>';           
