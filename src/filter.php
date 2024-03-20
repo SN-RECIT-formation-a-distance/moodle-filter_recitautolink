@@ -805,10 +805,12 @@ class filter_recitactivity extends moodle_text_filter {
         $section = $this->getSectionByName($complement);
 
         if($section == null){
+            $result = str_replace($match, "", $result);
             return;
         }
 
         if(($this->stats == null) || (!isset($this->stats->section[$section->id]))){
+            $result = str_replace($match, "", $result);
             return;
         }
 
@@ -828,8 +830,9 @@ class filter_recitactivity extends moodle_text_filter {
 
     protected function filterOptionCourseProgressBar($attributes, $match, &$result){
         if($this->stats == null){
+            $result = str_replace($match, "", $result);
             return;
-        }
+        } 
 
         $pct = round($this->stats->course->nbCmCompleted / $this->stats->course->nbCmTotal * 100,0);
 
