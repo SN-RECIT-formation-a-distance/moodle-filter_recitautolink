@@ -61,6 +61,8 @@ class filter_recitactivity extends moodle_text_filter {
     protected $DEFAULT_TARGET = '_self';
     /** @var object */
     protected $stats = null;
+     /** @var boolean */
+     protected $dataloaded = false;
 
     protected const NO_COMPLETION = 0;
     protected const COMPLETION_NOT_COMPLETED = 1;
@@ -93,10 +95,6 @@ class filter_recitactivity extends moodle_text_filter {
         }
 
         $this->dao = filter_recitactivity_dao_factory::getInstance()->getDAO();
-
-        $this->load_course_teachers($this->courseid);
-        $this->load_data();
-        $this->setStats();
     }
 
     /**
@@ -151,11 +149,21 @@ class filter_recitactivity extends moodle_text_filter {
         $this->cmcompletions = $this->dao->load_cm_completions($this->page->course->id);
     }
 
+    protected function load_data(){
+        if($this->dataloaded){
+            return;
+        }
+
+        $this->load_course_teachers($this->courseid);
+        $this->load_coursemodules();
+        $this->setStats();
+        
+        $this->dataloaded = true;
+    }
     /**
      * Load course modules list
-     * 
      */
-    protected function load_data() {
+    protected function load_coursemodules() {
         global $USER;
 
         $modules = get_fast_modinfo($this->courseid);
@@ -395,6 +403,12 @@ class filter_recitactivity extends moodle_text_filter {
 
         $matches = $matches[0]; // It will match the wanted RE, for instance [[i/Activité 3]].
 
+        // if no matches then it returns the original text
+        if(count($matches) == 0){
+            return $text;
+        }
+
+        $this->load_data();
 
         $result = $text;
         foreach ($matches as $match) {
