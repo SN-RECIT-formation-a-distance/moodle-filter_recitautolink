@@ -128,7 +128,29 @@ recit.filter.autolink.popupFeedback = function(content, dismissButton){
     popup.update();   
 }
 
-function filter_recitactivity_init_vars(_, settings){ 
+recit.filter.autolink.loadQRCodes = function(){
+    let placeholders = document.querySelectorAll("[data-qrcode-url]");
+   
+
+    for(let item of placeholders){
+        let options = {text: item.getAttribute('data-qrcode-url'), width: 256, height: 256};
+
+        if(item.getAttribute('data-width') === '100%'){
+            options.width = window.innerWidth;
+            options.height = window.innerWidth;
+
+            new QRCode(item, options);
+
+            let img = item.querySelector('img');
+            img.style.width = '100%';
+        }
+        else{
+            new QRCode(item, options);
+        }
+    }
+}
+
+recit.filter.autolink.loadOptionFeedback = function(){
     let counter = 0;
     let timer = function(){
         let elList = document.querySelectorAll('div[data-filter-recitactivity="feedback"]');
@@ -148,3 +170,8 @@ function filter_recitactivity_init_vars(_, settings){
     }
     window.setTimeout(timer, 500);
 }
+
+document.addEventListener('DOMContentLoaded', function(){ 
+    recit.filter.autolink.loadQRCodes();
+    recit.filter.autolink.loadOptionFeedback();
+}, false);

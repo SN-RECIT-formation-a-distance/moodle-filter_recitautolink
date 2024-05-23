@@ -369,6 +369,7 @@ class filter_recitactivity extends moodle_text_filter {
         $options['cmcompletion'] = $result->output->cmcompletion;
         
         $result->output->autolink = $this->get_autolink($result->cmData, $options);        
+        $result->output->url = $result->cmData->cmInfo->__get('url');
 
         return $result;
     }
@@ -518,6 +519,13 @@ class filter_recitactivity extends moodle_text_filter {
                     break;
                 case "f": 
                     $this->filterOptionFeedback($complement, $attributes, $match, $result);   
+                    break;
+                case "qr": 
+                    $this->filterOptionQRCode($complement, $attributes, $match, $result);   
+                    break;
+                case "qr100": 
+                    $attributes['qrWidth'] = '100%';
+                    $this->filterOptionQRCode($complement, $attributes, $match, $result);   
                     break;
             }
         }
@@ -860,6 +868,17 @@ class filter_recitactivity extends moodle_text_filter {
             </div>";
 
         $result = str_replace($match, $html, $result);
+    }
+
+    protected function filterOptionQRCode($complement, $attributes, $match, &$result){
+        $activity = $this->get_course_activity($complement, $attributes);
+        if ($activity != null) {
+            if(!$this->shouldHideIntCode($activity, $match, $result)){
+                $attrWidth = (isset($attributes['qrWidth']) ? "data-width='" . $attributes['qrWidth'] . "'" : '');
+                $html = "<div data-qrcode-url='{$activity->output->url}' $attrWidth></div>";
+                $result = str_replace($match, $html, $result);
+            }
+        }
     }
 
     protected function getModulePageContent(cm_info $cmInfo){

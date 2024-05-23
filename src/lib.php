@@ -30,6 +30,6 @@ defined('MOODLE_INTERNAL') || die();
 function filter_recitactivity_before_standard_top_of_body_html() {
     global $PAGE;
 
+    $PAGE->requires->js(new moodle_url('/filter/recitactivity/classes/qrcode/qrcode.min.js'), false);
     $PAGE->requires->js(new moodle_url('/filter/recitactivity/filter.js?v=1184'), false);
-    $PAGE->requires->js_init_call('filter_recitactivity_init_vars', array());
 }
