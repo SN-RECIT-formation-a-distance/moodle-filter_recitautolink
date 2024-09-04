@@ -1,5 +1,5 @@
 $from = "moodle-filter_recitautolink/src/*"
-$to = "shared/recitfad/filter/recitactivity/"
+$to = "shared/recitfad3/filter/recitactivity/"
 
 try {
     . ("..\sync\watcher.ps1")
