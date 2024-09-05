@@ -30,7 +30,11 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once(__DIR__."/dao.php");
 require_once(__DIR__ . '/../../../h5p/lib.php');
+
 use core_h5p\local\library\autoloader;
+use stdClass;
+use cm_info;
+use html_writer;
 
 /**
  * Main class for filtering text.
