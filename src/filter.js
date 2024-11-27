@@ -56,6 +56,7 @@ recit.filter.autolink.Popup = class {
             btn.classList.add('close');
             btn.innerHTML = '<span aria-hidden="true">&times;</span>';
             btn.setAttribute('data-dismiss', 'modal');
+            btn.onclick = this.destroy.bind(this);
             header.appendChild(this.title);
             header.appendChild(btn);
         }
@@ -74,19 +75,30 @@ recit.filter.autolink.Popup = class {
         }
 
         document.body.appendChild(this.modal);
-        $(this.modal).modal({show: true, backdrop: true});
+        /*$(this.modal).modal({show: true, backdrop: true});
 
         let that = this;
         $(".modal-backdrop").click(() => $(this.modal).modal('hide'));
         $(this.modal).on('hidden.bs.modal', function (e) {
             that.destroy()
-        })
+        })*/
+        this.modal.classList.add('show');
+
+        this.backdrop = document.createElement('div');
+        this.backdrop.classList.add('modal-backdrop', 'fade', 'show');
+        this.backdrop.setAttribute('data-backdrop', 'static');
+        document.body.appendChild(this.backdrop);
       }
+
       destroy(){
-          this.modal.remove();
+            this.modal.classList.remove('show');
+            this.backdrop.classList.remove('show');
+            this.modal.remove();
+            this.backdrop.remove();
       }
+      
       update(){
-        $(this.modal).modal('handleUpdate');
+        //$(this.modal).modal('handleUpdate');
       }
 }
 
@@ -96,7 +108,7 @@ recit.filter.autolink.popupIframe = function(url, className){
     let popup = new recit.filter.autolink.Popup(content, true);
    
     if (className.length > 0){
-        popup.popup.classList.add(className);
+        popup.modal.classList.add(className);
     }
 
     content.onload = () => {
@@ -115,7 +127,7 @@ recit.filter.autolink.popupIframe = function(url, className){
             content.contentWindow.document.head.appendChild(style);
         }
 
-        popup.update();
+        //popup.update();
     }
 }
 

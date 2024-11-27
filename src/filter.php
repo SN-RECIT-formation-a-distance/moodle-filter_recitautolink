@@ -23,8 +23,10 @@
  * @copyright  2019 RECIT
  * @license    {@link http://www.gnu.org/licenses/gpl-3.0.html} GNU GPL v3 or later
  */
-namespace filter_recitactivity;
 
+// WARNING: this namespace should not be defined for Moodle 4.3 and lower versions for compatibility reasons.
+//namespace filter_recitactivity; 
+ 
 defined('MOODLE_INTERNAL') || die();
 
 require_once(__DIR__."/classes/text_filter.php");

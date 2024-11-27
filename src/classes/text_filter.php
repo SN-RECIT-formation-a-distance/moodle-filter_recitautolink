@@ -35,6 +35,23 @@ use core_h5p\local\library\autoloader;
 use stdClass;
 use cm_info;
 use html_writer;
+use moodle_url;
+
+class Utils
+{
+    public static function moodle405(){
+        global $CFG;
+
+        return ($CFG->version >= 2024071200.00);
+    }
+}
+
+if(Utils::moodle405()){
+    $result = class_alias(\core_filters\text_filter::class, ParentClass::class);
+}
+else{
+    $result = class_alias(\moodle_text_filter::class, ParentClass::class);
+}
 
 /**
  * Main class for filtering text.
@@ -42,7 +59,7 @@ use html_writer;
  * Attention: do not utilise the global variables $PAGE and $COURSE. Instead, use $this->page and $this->page->course.
  * When the filter is used by some ajax service (like TreeTopics) the global variables are not set as it should but $this->page is so.
  */
-class text_filter extends \core_filters\text_filter {
+class text_filter extends ParentClass {
     /** @var array teachers list */
     protected $teacherslist = array();
     /** @var array */
@@ -79,7 +96,7 @@ class text_filter extends \core_filters\text_filter {
      * @param object $page
      * @param object $context
      */
-    public function setup($page, $context) {
+    public function setup($page, $context) {      
         $this->context = $context;
         $this->page = $page;
 
