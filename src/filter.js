@@ -21,11 +21,16 @@
  * @license    {@link http://www.gnu.org/licenses/gpl-3.0.html} GNU GPL v3 or later
  */
  
-var recit = recit || {};
-recit.filter = recit.filter || {};
-recit.filter.autolink = recit.filter.autolink || {};
+M.recit = M.recit || {};
+M.recit.filter = M.recit.filter || {};
+M.recit.filter.autolink = M.recit.filter.autolink || {};
 
-recit.filter.autolink.Popup = class {
+M.recit.filter.autolink.state = {
+    loadQRCodes: false,
+    loadPopupFeedback: false
+}
+
+M.recit.filter.autolink.Popup = class {
     constructor(content, showTitle, showFooter, maxWidth) {
 
         showTitle = (typeof showTitle === 'undefined' ? true : showTitle);
@@ -102,10 +107,10 @@ recit.filter.autolink.Popup = class {
       }
 }
 
-recit.filter.autolink.popupIframe = function(url, className){
+M.recit.filter.autolink.popupIframe = function(url, className){
     let content = document.createElement('iframe');
     content.src = url;
-    let popup = new recit.filter.autolink.Popup(content, true);
+    let popup = new M.recit.filter.autolink.Popup(content, true);
    
     if (className.length > 0){
         popup.modal.classList.add(className);
@@ -131,8 +136,8 @@ recit.filter.autolink.popupIframe = function(url, className){
     }
 }
 
-recit.filter.autolink.popupFeedback = function(content, dismissButton){
-    let popup = new recit.filter.autolink.Popup(null, false, true, false);
+M.recit.filter.autolink.popupFeedback = function(content, dismissButton){
+    let popup = new M.recit.filter.autolink.Popup(null, false, true, false);
 
     popup.dialog.classList.add('modal-xl'); 
     popup.body.appendChild(content); 
@@ -140,9 +145,12 @@ recit.filter.autolink.popupFeedback = function(content, dismissButton){
     popup.update();   
 }
 
-recit.filter.autolink.loadQRCodes = function(){
+M.recit.filter.autolink.loadQRCodes = function(){
+    if(M.recit.filter.autolink.state.loadQRCodes){
+        return;
+    }
+
     let placeholders = document.querySelectorAll("[data-qrcode-url]");
-   
 
     for(let item of placeholders){
         let options = {text: item.getAttribute('data-qrcode-url'), width: 256, height: 256};
@@ -159,31 +167,28 @@ recit.filter.autolink.loadQRCodes = function(){
         else{
             new QRCode(item, options);
         }
+
+        M.recit.filter.autolink.state.loadQRCodes = true;
     }
 }
 
-recit.filter.autolink.loadOptionFeedback = function(){
-    let counter = 0;
-    let timer = function(){
-        let elList = document.querySelectorAll('div[data-filter-recitactivity="feedback"]');
-        if(elList.length > 0){
-            for(let el of elList){
-                recit.filter.autolink.popupFeedback(el.childNodes[0], el.childNodes[1]);
-            }
-        }
-        else if(counter >= 3){
-            console.log("filter_recitactivity JS loaded.");
-        }
-        else{
-            counter++;
-            window.setTimeout(timer, 500);
-            //console.log("filter_recitactivity JS starting...");
-        }
+M.recit.filter.autolink.loadOptionFeedback = function(){
+    if( M.recit.filter.autolink.state.loadPopupFeedback){
+        return;
     }
-    window.setTimeout(timer, 500);
+
+    let elList = document.querySelectorAll('div[data-filter-recitactivity="feedback"]');
+    for(let el of elList){
+        M.recit.filter.autolink.popupFeedback(el.childNodes[0], el.childNodes[1]);
+        M.recit.filter.autolink.state.loadPopupFeedback = true;
+    }
+}
+
+M.recit.filter.autolink.loadLazyOptions = function(){
+    M.recit.filter.autolink.loadQRCodes();
+    M.recit.filter.autolink.loadOptionFeedback();
 }
 
 document.addEventListener('DOMContentLoaded', function(){ 
-    recit.filter.autolink.loadQRCodes();
-    recit.filter.autolink.loadOptionFeedback();
+    M.recit.filter.autolink.loadLazyOptions();
 }, false);

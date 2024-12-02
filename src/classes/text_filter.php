@@ -910,7 +910,7 @@ class text_filter extends ParentClass {
         }
 
         $page = $DB->get_record('page', array('id'=>$cm->instance), '*', MUST_EXIST);
-        $context = context_module::instance($cm->id);
+        $context = \context_module::instance($cm->id);
         
         $content = file_rewrite_pluginfile_urls($page->content, 'pluginfile.php', $context->id, 'mod_page', 'content', $page->revision);
         $formatoptions = new stdClass; 
