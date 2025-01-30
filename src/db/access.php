@@ -25,8 +25,6 @@
 defined('MOODLE_INTERNAL') || die();
 
 $capabilities = [
-
-
     'filter/recitactivity:teacher' => [
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'read',
