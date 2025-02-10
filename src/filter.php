@@ -307,9 +307,9 @@ class filter_recitactivity extends moodle_text_filter {
             }
             
             if (strlen($messageRestricted) > 0) {
-                $restrictioninfo .= "<button type='button' class='btn btn-sm btn-link' data-html='true' data-container='body' title='".get_string('restricted')."' data-toggle='popover' data-placement='bottom' data-content=\"$messageRestricted\">";
+                $restrictioninfo .= "<a tabindex='0' role='button' class='btn btn-sm btn-link' data-toggle='popover' data-trigger='focus' data-html='true' data-content=\"$messageRestricted\" data-original-title='".get_string('restricted')."' data-placement='bottom' >";
                 $restrictioninfo .= "<i class='fa fa-info-circle'></i>";
-                $restrictioninfo .= "</button>";
+                $restrictioninfo .= "</a>";
             }
         }
         else{
@@ -710,9 +710,9 @@ class filter_recitactivity extends moodle_text_filter {
             $infoMsg = $renderer->section_availability($section);
             $infoMsg = htmlspecialchars($infoMsg);
             
-            $availableInfo = sprintf("<button type='button' class='btn btn-sm btn-link' data-html='true' title='%s' data-container='body' data-toggle='popover' data-placement='bottom' data-content=\"%s\">", get_string('restricted'), $infoMsg);
+            $availableInfo = sprintf("<a tabindex='0' role='button' class='btn btn-sm btn-link' data-trigger='focus' data-html='true' data-original-title='%s' data-toggle='popover' data-placement='bottom' data-content=\"%s\">", get_string('restricted'), $infoMsg);
             $availableInfo .= "<i class='fa fa-info-circle'></i>";
-            $availableInfo .= "</button>";
+            $availableInfo .= "</a>";
             $class .= " disabled";
         }
         
@@ -760,9 +760,9 @@ class filter_recitactivity extends moodle_text_filter {
         } else if ($complement == "course.fullname") {
             $result = str_replace($match, $COURSE->fullname, $result);
         } else {
-            if (empty($this->teacherslist) && substr($complement, 0, 8) == "teacher1"){                            
-                $result = str_replace($match, "($match <button type='button' class='btn btn-sm btn-link' data-html='true' title='' data-container='body' data-toggle='popover' data-placement='bottom' 
-                                                        data-content='".get_string('noteacheringroup','filter_recitactivity')."' data-original-title=''><i class='fa fa-info-circle'></i></button></button>", $result);
+            if (empty($this->teacherslist) && substr($complement, 0, 8) == "teacher1"){                                              
+                $result = str_replace($match, "($match <a tabindex='0' role='button' class='btn btn-sm btn-link' data-html='true'  data-toggle='popover' data-placement='bottom' 
+                                                        data-trigger='focus' data-content='".get_string('noteacheringroup','filter_recitactivity')."' data-original-title=''><i class='fa fa-info-circle'></i></button></button>", $result);
             }
             foreach ($this->teacherslist as $index => $teacher) {
                 $nb = $index + 1;
