@@ -762,7 +762,7 @@ class filter_recitactivity extends moodle_text_filter {
         } else {
             if (empty($this->teacherslist) && substr($complement, 0, 8) == "teacher1"){                                              
                 $result = str_replace($match, "($match <a tabindex='0' role='button' class='btn btn-sm btn-link' data-html='true'  data-toggle='popover' data-placement='bottom' 
-                                                        data-trigger='focus' data-content='".get_string('noteacheringroup','filter_recitactivity')."' data-original-title=''><i class='fa fa-info-circle'></i></button></button>", $result);
+                                                        data-trigger='focus' data-content='".get_string('noteacheringroup','filter_recitactivity')."' data-original-title=''><i class='fa fa-info-circle'></i></a>", $result);
             }
             foreach ($this->teacherslist as $index => $teacher) {
                 $nb = $index + 1;
