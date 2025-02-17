@@ -53,4 +53,5 @@ $string['character_desc'] = 'Represents the separator character used in the filt
     </ul>
 	';
     $string['dismissMsg'] = 'Dismiss';
-    
+    $string['completion_condition_none'] = 'This activity is defined with none completion condition. Please set a completion condition.';
+    $string['close'] = 'Close';

@@ -319,7 +319,7 @@ class text_filter extends \core_filters\text_filter{
         }
         else{
             if (isset($options['popup'])){
-                $url = 'javascript:recit.filter.autolink.popupIframe("'.$url.'&autolinkpopup=1", "'.$options['popupclass'].'");';
+                $url = 'javascript:M.recit.filter.autolink.popupIframe("'.$url.'&autolinkpopup=1", "'.$options['popupclass'].'");';
             }
     
             if (isset($options['completion']) && ($options['completion'] == true)){
@@ -813,13 +813,18 @@ class text_filter extends \core_filters\text_filter{
 
         // cm is not completed or has no completion option
         if($cmCompletion == self::COMPLETION_NOT_COMPLETED){
-            $dismissButton = '<div class="d-flex justify-content-end"><button class="btn btn-sm text-nowrap btn-outline-secondary m-2" data-action="toggle-manual-completion" data-toggletype="manual:mark-done" 
+            $dismissButton = '<div><div class="d-flex justify-content-end"><button class="btn btn-sm text-nowrap btn-outline-secondary m-2" data-action="toggle-manual-completion" data-toggletype="manual:mark-done" 
             data-withavailability="1" data-cmid="'.$cmData->cmInfo->id.'"  data-activityname="Ignore"  
-            title='.get_string('dismissMsg','filter_recitactivity').'  aria-label='.get_string('dismissMsg','filter_recitactivity').'>'.get_string('dismissMsg','filter_recitactivity').'</button></div>';           
+            title='.get_string('dismissMsg','filter_recitactivity').'  aria-label='.get_string('dismissMsg','filter_recitactivity').'>'.get_string('dismissMsg','filter_recitactivity').'</button></div></div>';           
+        }
+        else{
+            $dismissButton = "<div class='alert alert-danger w-100 text-center'><b>".get_string('completion_condition_none','filter_recitactivity')."</b>
+                                <button data-close-modal class='btn btn-sm btn-secondary ml-2' >".get_string('close','filter_recitactivity')."</button>
+                                </div>";
         }
 
         if (isset($attributes['popup'])){
-            $result = str_replace($match, "<div style='display:none' data-filter-recitactivity='feedback'><div>$pageContent</div><div>$dismissButton</div></div>", $result);
+            $result = str_replace($match, "<div style='display:none' data-filter-recitactivity='feedback'><div>$pageContent</div>$dismissButton</div>", $result);
         }
         else{  
             $cssClasses = (isset($attributes['class']) ? $attributes['class'] : "");

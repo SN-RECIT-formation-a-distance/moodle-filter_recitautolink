@@ -54,4 +54,5 @@ $string['character_desc'] = 'Ceci repésente le caractère séparateur à utilis
 	';
 
     $string['dismissMsg'] = 'Ne plus afficher';
-    
+    $string['completion_condition_none'] = 'Cette activité n\'a pas une condition d\'achèvement. Veuillez définir une condition d\'achèvement.';
+    $string['close'] = 'Fermer';

@@ -38,7 +38,7 @@ class hook_callbacks {
         try {
             $script = "<script src='%s'></script>";
             $html = sprintf($script, "{$CFG->wwwroot}/filter/recitactivity/classes/qrcode/qrcode.min.js");
-            $html .= sprintf($script, "{$CFG->wwwroot}/filter/recitactivity/filter.js?v=1190");
+            $html .= sprintf($script, "{$CFG->wwwroot}/filter/recitactivity/filter.js?v=201");
             $hook->add_html($html);
         } catch (\dml_read_exception $e) {
             return;

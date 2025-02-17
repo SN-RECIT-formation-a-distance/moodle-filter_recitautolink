@@ -32,6 +32,7 @@ M.recit.filter.autolink.state = {
 
 M.recit.filter.autolink.Popup = class {
     constructor(content, showTitle, showFooter, maxWidth) {
+        this.title = null;
 
         showTitle = (typeof showTitle === 'undefined' ? true : showTitle);
         showFooter = (typeof showFooter === 'undefined' ? false : showFooter);
@@ -140,8 +141,14 @@ M.recit.filter.autolink.popupFeedback = function(content, dismissButton){
     let popup = new M.recit.filter.autolink.Popup(null, false, true, false);
 
     popup.dialog.classList.add('modal-xl'); 
-    popup.body.appendChild(content); 
+    popup.body.appendChild(content);     
     popup.footer.appendChild(dismissButton); 
+
+    let el = dismissButton.querySelector('[data-close-modal]')
+    if(el){
+        el.onclick = popup.destroy.bind(popup);
+    }
+
     popup.update();   
 }
 
