@@ -810,25 +810,23 @@ class text_filter extends \core_filters\text_filter{
         $pageContent = $this->getModulePageContent($cmData->cmInfo);
 
         $dismissButton = "";
+        $closeButton = "";
 
         // cm is not completed or has no completion option
         if($cmCompletion == self::COMPLETION_NOT_COMPLETED){
-            $dismissButton = '<div><div class="d-flex justify-content-end"><button class="btn btn-sm text-nowrap btn-outline-secondary m-2" data-action="toggle-manual-completion" data-toggletype="manual:mark-done" 
+            $dismissButton = '<button class="btn btn-sm text-nowrap btn-outline-secondary ml-2" data-action="toggle-manual-completion" data-toggletype="manual:mark-done" 
             data-withavailability="1" data-cmid="'.$cmData->cmInfo->id.'"  data-activityname="Ignore"  
-            title='.get_string('dismissMsg','filter_recitactivity').'  aria-label='.get_string('dismissMsg','filter_recitactivity').'>'.get_string('dismissMsg','filter_recitactivity').'</button></div></div>';           
-        }
-        else{
-            $dismissButton = "<div class='alert alert-danger w-100 text-center'><b>".get_string('completion_condition_none','filter_recitactivity')."</b>
-                                <button data-close-modal class='btn btn-sm btn-secondary ml-2' >".get_string('close','filter_recitactivity')."</button>
-                                </div>";
+            title='.get_string('dismissMsg','filter_recitactivity').'  aria-label='.get_string('dismissMsg','filter_recitactivity').'>'.get_string('dismissMsg','filter_recitactivity').'</button>';
         }
 
         if (isset($attributes['popup'])){
-            $result = str_replace($match, "<div style='display:none' data-filter-recitactivity='feedback'><div>$pageContent</div>$dismissButton</div>", $result);
+            $closeButton = "<button type='button' class='btn btn-outline-secondary btn-sm' data-close-modal>".get_string('close','filter_recitactivity')."</button>";
+
+            $result = str_replace($match, "<div style='display:none' data-filter-recitactivity='feedback'><div>$pageContent</div><div>$closeButton $dismissButton</div></div>", $result);
         }
         else{  
             $cssClasses = (isset($attributes['class']) ? $attributes['class'] : "");
-            $html = "<div class='$cssClasses'>$pageContent $dismissButton</div>";
+            $html = "<div class='$cssClasses'>$pageContent <div class='d-flex justify-content-end'>$dismissButton</div></div>";
             $result = str_replace($match, $html, $result);
         }
     }
