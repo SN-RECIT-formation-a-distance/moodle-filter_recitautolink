@@ -46,7 +46,7 @@ M.recit.filter.autolink.Popup = class {
         }
 
         this.dialog = document.createElement('div');
-        this.dialog.classList.add('modal-dialog', 'modal-dialog-centered');
+        this.dialog.classList.add('modal-dialog', 'modal-dialog-centered', 'modal-dialog-scrollable');
         this.modal.appendChild(this.dialog);
 
         let inner = document.createElement('div');
@@ -69,6 +69,7 @@ M.recit.filter.autolink.Popup = class {
 
         this.body = document.createElement('div');
         this.body.classList.add('modal-body');
+        this.body.style.scrollbarWidth = "thin";
         inner.appendChild(this.body);
         if(content !== null){
             this.body.appendChild(content);
