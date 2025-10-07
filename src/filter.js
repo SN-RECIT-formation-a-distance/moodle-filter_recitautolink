@@ -119,7 +119,11 @@ M.recit.filter.autolink.popupIframe = function(url, className){
     }
 
     content.onload = () => {
-        popup.title.innerText = content.contentDocument.title;
+        let title = content.contentDocument.title;
+        if (title.includes('|')){
+            title = title.split('|')[0]; //Only keep activity title, not Moodle name
+        }
+        popup.title.innerText = title;
         if (!content.contentWindow.document.querySelector('iframe')){
             content.contentWindow.document.querySelector('html').style.height = 'auto'; //adjust body height to content instead of 100%
             content.style.height = content.contentWindow.document.documentElement.offsetHeight + 'px'; //adjust iframe to page height
