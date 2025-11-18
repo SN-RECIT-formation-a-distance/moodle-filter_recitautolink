@@ -723,7 +723,7 @@ class text_filter extends \core_filters\text_filter{
         
         $tagattr = array('class' => 'autolink '.$class, 'title' => $title, 'target' => $options['target'], 'onclick' => 'this.search == document.location.search && setTimeout(location.reload.bind(location), 50)');
         $href = "#";
-        $href = new moodle_url('/course/view.php', array('id' => $this->page->course->id, 'section' => $section->section), $anchor);
+        $href = new moodle_url('/course/section.php', array('id' => $section->id), $anchor);
         
         $link = html_writer::link($href, $sectionname, $tagattr);
         
