@@ -318,12 +318,14 @@ class text_filter extends \core_filters\text_filter{
             }
         }
         else{
-            if (isset($options['popup'])){
-                $url = 'javascript:M.recit.filter.autolink.popupIframe("'.$url.'&autolinkpopup=1", "'.$options['popupclass'].'");';
-            }
     
+            $refreshOnClose = 'false';
             if (isset($options['completion']) && ($options['completion'] == true)){
                 $activityicon = $options['cmcompletion'].' '.$activityicon;
+                $refreshOnClose = 'true';
+            }
+            if (isset($options['popup'])){
+                $url = 'javascript:M.recit.filter.autolink.popupIframe("'.$url.'&autolinkpopup=1", "'.$options['popupclass'].'", "'.$refreshOnClose.'");';
             }
 
             $attributes = array('class' => 'autolink '.$class, 'title' => $title, 'href' => $url, 'target' => $options['target']);

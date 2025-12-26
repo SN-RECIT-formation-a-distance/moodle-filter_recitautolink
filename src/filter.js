@@ -31,12 +31,13 @@ M.recit.filter.autolink.state = {
 }
 
 M.recit.filter.autolink.Popup = class {
-    constructor(content, showTitle, showFooter, maxWidth) {
+    constructor(content, showTitle, showFooter, maxWidth, refreshOnClose) {
         this.title = null;
 
         showTitle = (typeof showTitle === 'undefined' ? true : showTitle);
         showFooter = (typeof showFooter === 'undefined' ? false : showFooter);
         maxWidth = (typeof maxWidth === 'undefined' ? true : maxWidth);
+        this.refreshOnClose = (typeof refreshOnClose === 'undefined' ? false : refreshOnClose);
 
         this.modal = document.createElement('div');
         this.modal.classList.add('modal', 'fade');
@@ -102,6 +103,10 @@ M.recit.filter.autolink.Popup = class {
             this.backdrop.classList.remove('show');
             this.modal.remove();
             this.backdrop.remove();
+
+            if (this.refreshOnClose){
+                window.location.reload();
+            }
       }
       
       update(){
@@ -109,10 +114,10 @@ M.recit.filter.autolink.Popup = class {
       }
 }
 
-M.recit.filter.autolink.popupIframe = function(url, className){
+M.recit.filter.autolink.popupIframe = function(url, className, refreshOnClose){
     let content = document.createElement('iframe');
     content.src = url;
-    let popup = new M.recit.filter.autolink.Popup(content, true);
+    let popup = new M.recit.filter.autolink.Popup(content, true, false, true, refreshOnClose);
    
     if (className.length > 0){
         popup.modal.classList.add(className);
