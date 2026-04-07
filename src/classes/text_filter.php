@@ -527,6 +527,9 @@ class text_filter extends \core_filters\text_filter{
                 case "f": 
                     $this->filterOptionFeedback($complement, $attributes, $match, $result);   
                     break;
+                case "e": 
+                    $this->filterEmbed($complement, $attributes, $match, $result);   
+                    break;
                 case "qr": 
                     $this->filterOptionQRCode($complement, $attributes, $match, $result);   
                     break;
@@ -680,6 +683,39 @@ class text_filter extends \core_filters\text_filter{
             if(!$this->shouldHideIntCode($activity, $match, $result)){
                 $result = str_replace($match, $activity->output->autolink, $result);
             }
+        }
+    }
+
+    protected function filterEmbed($complement, $attributes, $match, &$result){
+        global $DB;
+        $activity = $this->get_course_activity($complement, $attributes);
+        if ($activity != null) {  
+            $cmid = $activity->cmData->cmInfo->__get('id');
+            $url = $activity->cmData->cmInfo->__get('url');
+            $type = $activity->cmData->cmInfo->__get('modname');
+            $output = '';
+            switch ($type){
+                case 'resource':
+                    $output = "<iframe class='recitautolink_embed' src='$url&redirect=1'></iframe>";
+                    break;
+                case 'scorm':
+
+                    $cm = get_coursemodule_from_id('scorm', $cmid, 0, false, MUST_EXIST);
+
+                    // Get first launchable SCO
+                    $sco = $DB->get_record('scorm_scoes', [
+                        'scorm' => $cm->instance, 
+                    ], '*', IGNORE_MULTIPLE);
+
+                    $url = (new moodle_url('/mod/scorm/player.php', [
+                        'cm' => $cmid,
+                        'scoid' => $sco->id,
+                        'display' => 'popup',
+                    ]))->out();
+                    $output = "<iframe class='recitautolink_embed' src='$url'></iframe>";
+                    break;
+            }
+            $result = str_replace($match, $output, $result);
         }
     }
 

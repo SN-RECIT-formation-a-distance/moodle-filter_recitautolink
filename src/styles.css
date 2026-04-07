@@ -34,3 +34,8 @@ body .recitautolink_popup .modal-header{
 body .recitautolink_popup .modal-header h3{
     margin-bottom: 0rem;
 } 
+
+.recitautolink_embed {
+    width: 100%;
+    border: none;
+}

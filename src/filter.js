@@ -201,9 +201,27 @@ M.recit.filter.autolink.loadOptionFeedback = function(){
     }
 }
 
+
+M.recit.filter.autolink.loadEmbed = function(){
+    if( M.recit.filter.autolink.state.loadEmbed){
+        return;
+    }
+
+    let elList = document.querySelectorAll('.recitautolink_embed');
+    for(let el of elList){
+        el.addEventListener('load', () => {
+          const doc = el.contentDocument || el.contentWindow.document;
+        
+            el.style.height = (doc.body.scrollHeight + 15) + 'px';
+        });
+        M.recit.filter.autolink.state.loadEmbed = true;
+    }
+}
+
 M.recit.filter.autolink.loadLazyOptions = function(){
     M.recit.filter.autolink.loadQRCodes();
     M.recit.filter.autolink.loadOptionFeedback();
+    M.recit.filter.autolink.loadEmbed();
 }
 
 document.addEventListener('DOMContentLoaded', function(){ 
