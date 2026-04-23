@@ -210,9 +210,13 @@ M.recit.filter.autolink.loadEmbed = function(){
     let elList = document.querySelectorAll('.recitautolink_embed');
     for(let el of elList){
         el.addEventListener('load', () => {
-          const doc = el.contentDocument || el.contentWindow.document;
-        
-            el.style.height = (doc.body.scrollHeight + 15) + 'px';
+            const doc = el.contentDocument || el.contentWindow.document;
+            let height = doc.body.scrollHeight;
+            if (height > 0){        
+                el.style.height = (height + 15) + 'px';
+            }else{
+                el.style.height = '70vh';//If we don't find the height, default to 70% of the screen
+            }
         });
         M.recit.filter.autolink.state.loadEmbed = true;
     }
