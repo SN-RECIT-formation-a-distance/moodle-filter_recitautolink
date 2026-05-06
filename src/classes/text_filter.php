@@ -855,7 +855,7 @@ class text_filter extends \core_filters\text_filter{
         if($cmCompletion == self::COMPLETION_NOT_COMPLETED){
             $dismissButton = '<button class="btn btn-sm text-nowrap btn-outline-secondary ml-2" data-action="toggle-manual-completion" data-toggletype="manual:mark-done" 
             data-withavailability="1" data-cmid="'.$cmData->cmInfo->id.'"  data-activityname="Ignore"  
-            title='.get_string('dismissMsg','filter_recitactivity').'  aria-label='.get_string('dismissMsg','filter_recitactivity').'>'.get_string('dismissMsg','filter_recitactivity').'</button>';
+            title="'.get_string('dismissMsg','filter_recitactivity').'" aria-label="'.get_string('dismissMsg','filter_recitactivity').'">'.get_string('dismissMsg','filter_recitactivity').'</button>';
         }
 
         if (isset($attributes['popup'])){
