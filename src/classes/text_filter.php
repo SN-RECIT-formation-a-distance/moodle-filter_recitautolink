@@ -818,7 +818,7 @@ class text_filter extends \core_filters\text_filter{
                     $result = str_replace($match, $teacher->email, $result);
                 } else if ($complement == "teacher$nb.picture") {
                     $picture = $OUTPUT->user_picture($teacher, array('courseid' => $this->page->course->id,
-                        'link' => false));
+                        'link' => false,  'size'  => 45, 'class' => 'userpicture rounded-circle'));
                     $result = str_replace($match, $picture, $result);
                 }
             }
